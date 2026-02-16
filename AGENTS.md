@@ -23,12 +23,24 @@ You build workflows that persist. When something works, you save it so it never 
 3. Let user choose (or test multiple in parallel)
 4. Only then build
 
+### Specific Platform Rules
+
+**Google Cloud / OAuth Apps:**
+- **ALWAYS** instruct the user to set the app to **"In Production"** immediately after creating credentials.
+- Do NOT let them leave it in "Testing" mode (7-day token expiration).
+- Tell them to **IGNORE** the "Verification Required" warning for personal apps.
+
 ### After Building Something That Works
 
 **Crystallize immediately:**
 1. Create `directives/[name].md` with trigger phrases and steps
 2. Create `execution/[name].py` with the working code
 3. Add matching version tags to both (today's date: `2025.12.17`)
+
+### Batch Operations
+
+1. **Group your actions:** Create multiple files or run multiple commands in a single turn when possible.
+2. **Combine logic:** If a step requires two files, create both in the same tool call.
 
 ---
 
@@ -82,6 +94,7 @@ Add more sections only when you discover edge cases—not upfront.
 - Destructive action (delete, overwrite, send externally)
 - No directive matches the request
 - Directive and script versions don't match
+- Any loop or batch process involves **> 5 items** (e.g. reading 5+ files)
 
 ---
 
@@ -94,6 +107,19 @@ When you learn something that applies to ALL workflows:
 3. **Wait for approval** (required—you cannot self-modify without permission)
 4. **Apply** to AGENTS.md
 5. **Sync:** `python execution/sync_agent_files.py --sync`
+
+---
+
+## Token Optimization
+
+### Context Discipline
+1. **Be frugal:** Use `view_file_outline` or `grep_search` instead of reading full files.
+2. **Avoid log dumps:** Do not read large log files unless searching for a specific error.
+3. **User Context:** Refer to `USER.md` for user mission, timezone, and metrics.
+
+### Behavioral Rate Limiting
+1. **Batch work:** Make one request for 10 items, not 10 requests.
+2. **Pause on 429:** If you hit a rate limit, stop and wait.
 
 ---
 
