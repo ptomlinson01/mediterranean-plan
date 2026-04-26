@@ -1,34 +1,55 @@
-# Agent Instructions
-<!-- DOE-VERSION: 2025.12.19 -->
+# Claude Code Agent Instructions
+<!-- DOE-VERSION: 2026.04.26 -->
 <!-- Mirrored: AGENTS.md = CLAUDE.md = GEMINI.md -->
 <!-- Edit any file, then sync: python execution/sync_agent_files.py --sync -->
-<!-- The most recently modified file becomes the source -->
+<!-- Optimized for Claude Code terminal-based workflow -->
 
 You build workflows that persist. When something works, you save it so it never needs to be rebuilt.
 
 ---
 
-## How You Operate
+## Core Workflow
 
 ### On Every Request
+1. **Check `directives/`** for matching workflow
+2. **Execute** if found, **research & build** if not
+3. **Crystallize** working solutions immediately
 
-1. **Check `directives/`** for existing workflow that matches
-2. **If found:** Execute it
-3. **If not found:** Research approaches, build, then save as new directive + script
+### Research Before Building
+- **Web Search**: Use `fetch_webpage` for docs, GitHub repos, tutorials
+- **API Exploration**: Check current SDK versions, auth patterns
+- **Present 3 Options**: Simplest, most robust, most maintainable
+- **Include Cost Analysis**: Token estimates, runtime expectations
+- **User Chooses**: Or test approaches in parallel
 
-### Before Building Anything New
+### File Operations
+- **Paths**: Always use absolute paths: `c:\Users\ptomlinson\Documents\DEV\[project]\...`
+- **Creation**: Use `create_file` for new scripts
+- **Editing**: Use `replace_string_in_file` with 3-5 lines context
+- **Validation**: Run scripts immediately, check output before proceeding
 
-1. Search web for existing solutions (APIs, libraries, approaches)
-2. Present at least 3 options with tradeoffs
-3. Let user choose (or test multiple in parallel)
-4. Only then build
+---
 
-### After Building Something That Works
+## Claude Code Tool Patterns
 
-**Crystallize immediately:**
-1. Create `directives/[name].md` with trigger phrases and steps
-2. Create `execution/[name].py` with the working code
-3. Add matching version tags to both (today's date: `2025.12.17`)
+### Terminal Integration
+- **Immediate Execution**: `isBackground=false` for feedback
+- **Background Tasks**: `isBackground=true` for servers/watchers
+- **Output Capture**: Check `get_terminal_output` for long-running tasks
+- **Error Recovery**: Retry with backoff (1s, 2s, 4s)
+- **Environment**: PowerShell, use `;` for command chaining
+
+### Research Tools
+- **Web Content**: `fetch_webpage` for official documentation
+- **Complex Research**: `runSubagent` for multi-step investigations
+- **Code Examples**: `github_repo` for implementation patterns
+- **Workspace Search**: `semantic_search` for existing code patterns
+
+### File Management
+- **Directory Creation**: `create_directory` before file operations
+- **Bulk Operations**: Group file creations in single turns
+- **Validation**: `get_errors` after substantive changes
+- **Testing**: Run minimal validation tests immediately
 
 ---
 
@@ -57,8 +78,6 @@ python execution/script.py [args]
 [What user gets, where it goes]
 ```
 
-Add more sections only when you discover edge cases—not upfront.
-
 ---
 
 ## Error Handling
@@ -70,7 +89,7 @@ Add more sections only when you discover edge cases—not upfront.
 | Logic | Wrong output | Fix script, update directive |
 | External | API changed | Stop, tell user |
 
-**After 3 failures of same error:** Stop and ask user what to do.
+**After 3 failures:** Stop and ask user what to do.
 
 ---
 
@@ -82,18 +101,18 @@ Add more sections only when you discover edge cases—not upfront.
 - Destructive action (delete, overwrite, send externally)
 - No directive matches the request
 - Directive and script versions don't match
+- Any loop or batch process involves > 5 items
 
 ---
 
-## Self-Improvement
+## Self-Improvement for Claude Code
 
-When you learn something that applies to ALL workflows:
-
-1. **Draft** the specific edit to these instructions
-2. **Show user** and explain why
-3. **Wait for approval** (required—you cannot self-modify without permission)
-4. **Apply** to AGENTS.md
-5. **Sync:** `python execution/sync_agent_files.py --sync`
+When learning applies universally:
+1. **Test** the pattern on 2-3 workflows
+2. **Document** the improvement with before/after examples
+3. **Update** CLAUDE.md with the new pattern
+4. **Sync** via `python execution/sync_agent_files.py --sync`
+5. **Validate** on next workflow creation
 
 ---
 

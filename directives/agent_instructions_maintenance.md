@@ -1,5 +1,5 @@
 # Agent Instructions Maintenance
-<!-- DOE-VERSION: 2025.12.19 -->
+<!-- DOE-VERSION: 2026.04.26 -->
 
 ## Goal
 

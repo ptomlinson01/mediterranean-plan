@@ -1,7 +1,9 @@
-# Agentic Workflows Template
-## Build Once, Run Forever
+# Claude Code Agentic Workflows Template
+## Build Once, Run Forever - Optimized for Claude Code
 
-You describe what you want. The AI builds it. The workflow gets saved so you never rebuild it.
+You describe what you want. Claude Code builds it. The workflow gets saved so you never rebuild it.
+
+**Optimized for terminal-based development with streamlined instructions and Claude Code tool patterns.**
 
 ---
 
@@ -50,14 +52,20 @@ claude --dangerously-skip-permissions
 
 ## How It Works
 
-**Three layers:**
+**Three layers optimized for Claude Code:**
 1. **Directives** - Plain English instructions (`directives/*.md`)
-2. **Orchestration** - AI makes decisions
+2. **Orchestration** - Claude Code makes decisions using optimized tool patterns
 3. **Execution** - Python scripts do the work (`execution/*.py`)
 
-**First time:** "Build a workflow that scrapes competitor prices" -> AI researches, builds, saves
+**First time:** "Build a workflow that scrapes competitor prices" → Claude Code researches APIs, presents 3 options, builds with validation
 
-**Every time after:** "Scrape competitor prices" -> AI finds directive, runs script, done
+**Every time after:** "Scrape competitor prices" → Claude Code finds directive, runs script, done
+
+**Claude Code optimizations:**
+- Streamlined instructions for faster context loading
+- Tool-specific patterns for terminal/file operations
+- Enhanced research phase with web search integration
+- Immediate validation and error recovery
 
 ---
 
@@ -65,7 +73,7 @@ claude --dangerously-skip-permissions
 
 ```
 your-project/
-├── CLAUDE.md              # AI instructions (source of truth)
+├── CLAUDE.md              # Claude Code optimized instructions (source of truth)
 ├── AGENTS.md              # Mirror for other AI tools
 ├── GEMINI.md              # Mirror for Gemini
 ├── REFERENCE.md           # Deep documentation
