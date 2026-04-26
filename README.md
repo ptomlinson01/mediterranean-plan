@@ -39,13 +39,36 @@ rm -rf .git && git init  # Start fresh git history
 # 1. Set up environment
 cp .env.example .env
 # Edit .env with your API keys (at minimum: ANTHROPIC_API_KEY)
+# For auto GitHub sync, also add: GITHUB_TOKEN and GITHUB_USERNAME
 
 # 2. Verify
 python execution/sync_agent_files.py --check
 
-# 3. Open in Claude Code
+# 3. Set up GitHub repository (optional)
+python setup_github.py
+
+# 4. Open in Claude Code
 claude --dangerously-skip-permissions
 # This flag allows Claude to run scripts without confirmation prompts
+```
+
+### Auto GitHub Sync Setup
+
+To automatically sync new DEV projects to GitHub:
+
+```bash
+# Configure GitHub token in .env
+echo "GITHUB_TOKEN=ghp_your_token_here" >> .env
+echo "GITHUB_USERNAME=ptomlinson" >> .env
+
+# Test the sync (dry run first)
+python execution/auto_github_sync.py --scan --dry-run
+
+# Run actual sync
+python execution/auto_github_sync.py --scan
+
+# Or enable continuous monitoring
+python execution/auto_github_sync.py --watch
 ```
 
 ---
