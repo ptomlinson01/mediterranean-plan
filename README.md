@@ -67,9 +67,15 @@ python execution/auto_github_sync.py --scan --dry-run
 # Run actual sync
 python execution/auto_github_sync.py --scan
 
-# Or enable continuous monitoring
-python execution/auto_github_sync.py --watch
+# Set up DAILY automated sync at 7pm
+# Right-click setup_daily_sync.bat and "Run as administrator"
+# OR run: python execution/schedule_github_sync.py --setup
+
+# Check if daily sync is active
+python execution/schedule_github_sync.py --status
 ```
+
+**Daily Automation:** Once set up, any new folders created in your DEV directory will be automatically synced to GitHub every day at 7:00 PM.
 
 ---
 
@@ -114,6 +120,7 @@ your-project/
 - **[directives/csv_to_json.md](directives/csv_to_json.md)** - Example: Convert CSV files to JSON (no API needed)
 - **[directives/weather_lookup.md](directives/weather_lookup.md)** - Example: Look up weather via API (shows dotenv pattern)
 - **[directives/auto_github_sync.md](directives/auto_github_sync.md)** - Auto-sync DEV projects to GitHub repositories
+- **[directives/daily_github_sync.md](directives/daily_github_sync.md)** - Automated daily GitHub sync scheduling
 - **[directives/_TEMPLATE.md](directives/_TEMPLATE.md)** - Template for new workflows
 - **[execution/_TEMPLATE.py](execution/_TEMPLATE.py)** - Template for new scripts
 

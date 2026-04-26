@@ -117,8 +117,25 @@ class GitHubSync:
             # Add GitHub remote
             subprocess.run(['git', 'remote', 'add', 'origin', repo_url], cwd=path, check=True)
 
-            # Push to GitHub
-            subprocess.run(['git', 'push', '-u', 'origin', 'main'], cwd=path, check=True)
+            # Rename master to main if needed, then push
+            try:
+                # Check current branch name
+                branch_result = subprocess.run(['git', 'branch', '--show-current'], cwd=path, capture_output=True, text=True, check=True)
+                current_branch = branch_result.stdout.strip()
+                
+                if current_branch == 'master':
+                    # Rename master to main
+                    subprocess.run(['git', 'branch', '-m', 'master', 'main'], cwd=path, check=True)
+                    push_branch = 'main'
+                else:
+                    push_branch = current_branch
+                
+                # Push to GitHub
+                subprocess.run(['git', 'push', '-u', 'origin', push_branch], cwd=path, check=True)
+                
+            except subprocess.CalledProcessError:
+                # Fallback: try pushing current branch
+                subprocess.run(['git', 'push', '-u', 'origin', 'HEAD'], cwd=path, check=True)
 
             self.log(f"Successfully synced {path.name} to GitHub")
             return True
@@ -226,5 +243,4 @@ def main():
         return 0
 
 if __name__ == "__main__":
-    sys.exit(main())</content>
-<parameter name="filePath">c:\Users\ptomlinson\Documents\DEV\AGENTIC TEMPLATE\CLAUDECODE-WORKFLOW-TEMPLATE\execution\auto_github_sync.py
+    sys.exit(main())
