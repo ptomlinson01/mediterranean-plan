@@ -79,6 +79,7 @@ your-project/
 ├── REFERENCE.md           # Deep documentation
 ├── directives/            # Your workflows
 ├── execution/             # Your scripts
+├── logs/                  # Auto-sync logs and operation history
 └── .env                   # API keys (gitignored)
 ```
 
@@ -89,6 +90,7 @@ your-project/
 - **[REFERENCE.md](REFERENCE.md)** - Full documentation (architecture, error handling, advanced features)
 - **[directives/csv_to_json.md](directives/csv_to_json.md)** - Example: Convert CSV files to JSON (no API needed)
 - **[directives/weather_lookup.md](directives/weather_lookup.md)** - Example: Look up weather via API (shows dotenv pattern)
+- **[directives/auto_github_sync.md](directives/auto_github_sync.md)** - Auto-sync DEV projects to GitHub repositories
 - **[directives/_TEMPLATE.md](directives/_TEMPLATE.md)** - Template for new workflows
 - **[execution/_TEMPLATE.py](execution/_TEMPLATE.py)** - Template for new scripts
 
