@@ -550,7 +550,7 @@ function showGrocery() {
 let recipeFilter = 'all';
 
 function renderRecipes() {
-  header('Recipes', `${RECIPES.length} Mediterranean meals`);
+  header('Recipes', `${RECIPES.length} everyday recipes`);
   const filters = [
     ['all', 'All'], ['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'],
     ['snack', 'Snacks'], ['zero', 'No cook'], ['batch', 'Batch cook'], ['high-protein', 'High protein']

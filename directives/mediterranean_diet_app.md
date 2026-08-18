@@ -38,7 +38,7 @@ Full deployment and iPhone install steps: `app/README.md`.
 2. **Computes targets** — Mifflin-St Jeor BMR × activity, deficit capped at 25% of TDEE and floored at 1500/1250 kcal, protein set at 1.6 g/kg of goal weight to protect lean mass.
 3. **Builds the week** — classifies each day by hours worked (off / light / normal / long / brutal), which sets the maximum cooking effort and the calorie split. Batch cooks land on the lightest day; their leftovers are routed forward to the heaviest days with exact portion accounting.
 4. **Runs the day** — Today shows remaining calories and protein, an hours-worked stepper, tick-off meals, and weigh-in. If actual hours diverge from planned, it offers to re-tune the rest of the day.
-5. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file plus a compact index of all 53 recipes into the system prompt.
+5. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file plus a compact index of all 42 recipes into the system prompt.
 
 ---
 
@@ -55,6 +55,7 @@ Full deployment and iPhone install steps: `app/README.md`.
 - **The plan is a supply chain.** Batch cook on the light day, eat the leftovers on the brutal day. Verified: across 300 generated weeks, no batch recipe is ever eaten more than it makes.
 - **Portions scale, recipes don't multiply.** One serving is the recipe's unit; the planner scales servings (0.75–3, per-slot ceilings) to hit the calorie target. Breakfast and snacks are capped lower so surplus doesn't become 900 kcal of oats or six squares of chocolate.
 - **Allergies expand to foods.** "Shellfish" is mapped to shrimp/mussel/prawn/etc., because recipes list foods, not categories. Matching is whole-word so "egg" doesn't knock out eggplant, and "olive oil" is excluded so disliking olives doesn't empty the bank.
+- **Plain English, ordinary ingredients.** Recipes are named after what is on the plate — no foreign culinary words — and every ingredient is sold in a normal supermarket under the name written. The operator reported that unfamiliar recipe names made the app overwhelming, which is the failure mode that ends adherence. The same rule is enforced on the AI coach in the system prompt.
 - **Context file is the product.** Following Daniel Miessler's personal-AI method — the model gets an explicit, readable, user-owned description of the person instead of guessing. Visible and copyable in Me → Context file.
 - **Bring-your-own API key.** Stored in localStorage only, never in backups. Everything except the chat works with no key.
 
