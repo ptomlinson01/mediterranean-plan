@@ -84,11 +84,14 @@ ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the
 - Weight logged today: ${today.weight ? today.weight + ' lb' : 'not yet'}.
 - Meals ticked off so far: ${(today.done || []).join(', ') || 'none'}.
 
-## Constraints
+## Constraints — treat these as hard rules, not preferences
 - Dislikes / won't eat: ${p.dislikes || 'none stated'}.
 - Allergies: ${p.allergies || 'none stated'}.
+- Kitchen equipment available: ${(p.kitchen || []).join(', ') || 'basic'}. Never suggest a method needing equipment not on this list.
 - Health conditions / medications mentioned: ${p.conditions || 'none stated'}.
-- Personal notes: ${p.notes || '—'}.
+- Household notes and food rules: ${p.notes || '—'}.
+
+If any note above rules out a food, a combination, or a piece of equipment, it applies to every suggestion you make, including improvised ones. Do not suggest a substitute that quietly reintroduces the same thing.
 
 ## Recent weigh-ins
 ${recent}

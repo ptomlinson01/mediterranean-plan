@@ -38,7 +38,7 @@ Full deployment and iPhone install steps: `app/README.md`.
 2. **Computes targets** — Mifflin-St Jeor BMR × activity, deficit capped at 25% of TDEE and floored at 1500/1250 kcal, protein set at 1.6 g/kg of goal weight to protect lean mass.
 3. **Builds the week** — classifies each day by hours worked (off / light / normal / long / brutal), which sets the maximum cooking effort and the calorie split. Batch cooks land on the lightest day; their leftovers are routed forward to the heaviest days with exact portion accounting.
 4. **Runs the day** — Today shows remaining calories and protein, an hours-worked stepper, tick-off meals, and weigh-in. If actual hours diverge from planned, it offers to re-tune the rest of the day.
-5. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file plus a compact index of all 42 recipes into the system prompt.
+5. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file plus a compact index of all 44 recipes into the system prompt.
 
 ---
 

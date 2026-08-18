@@ -97,7 +97,7 @@ If the day goes sideways, **Today → Re-tune today's meals** rebuilds the rest 
 
 - **Today** — calories and protein remaining, hours-worked stepper, the day's meals with tick-off, weigh-in.
 - **Week** — all 7 days with day types and batch day marked, meal swapping, aisle-grouped grocery list.
-- **Recipes** — 42 recipes in plain English, filterable by meal, effort, batch, or protein.
+- **Recipes** — 44 recipes in plain English, filterable by meal, effort, batch, or protein.
 - **Coach** — streaming chat with eight situational quick-prompts. Instructed to answer in plain English and stick to supermarket ingredients.
 - **Me** — your targets with the arithmetic shown, weight trend chart, the context file, settings, JSON backup/restore.
 

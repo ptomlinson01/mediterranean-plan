@@ -57,19 +57,19 @@ export const RECIPES = [
   ]
 },
 {
-  id: 'b-boiled-eggs-toast', name: 'Hard-Boiled Eggs with Toast and Tomato', meal: ['breakfast'],
+  id: 'b-boiled-eggs-toast', name: 'Hard-Boiled Eggs with Toast and Peppers', meal: ['breakfast'],
   effort: 'zero', minutes: 5, servings: 1, kcal: 400, protein: 22, carbs: 36, fat: 19, fiber: 6,
   tags: ['no-cook', 'prep-ahead', 'high-protein'],
   ingredients: [
     { n: 'Eggs, boiled ahead of time', q: 2, u: 'large', a: 'protein' },
     { n: 'Whole-grain bread', q: 2, u: 'slices', a: 'bakery' },
-    { n: 'Tomato, sliced', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Roasted red peppers, sliced', q: 0.5, u: 'cup', a: 'pantry' },
     { n: 'Olive oil', q: 2, u: 'tsp', a: 'pantry' },
     { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
   ],
   steps: [
     'Boil half a dozen eggs on a Sunday and this becomes a five-minute breakfast all week.',
-    'Toast, sliced tomato, sliced egg, olive oil, salt, pepper.'
+    'Toast, peppers straight from the jar, sliced egg, olive oil, salt, pepper.'
   ],
   note: 'Six eggs boiled at the weekend covers three breakfasts with no cooking at all.'
 },
@@ -90,19 +90,6 @@ export const RECIPES = [
     'Eat it cold in the morning. That is the whole recipe.'
   ],
   note: 'Make two at once. The second costs you ninety extra seconds and buys back a weekday morning.'
-},
-{
-  id: 'b-cottage-fruit', name: 'Cottage Cheese with Fruit', meal: ['breakfast'],
-  effort: 'zero', minutes: 3, servings: 1, kcal: 310, protein: 29, carbs: 24, fat: 11, fiber: 4,
-  tags: ['no-cook', 'high-protein'],
-  ingredients: [
-    { n: 'Low-fat cottage cheese', q: 1, u: 'cup', a: 'dairy' },
-    { n: 'Berries or sliced peach', q: 0.75, u: 'cup', a: 'produce' },
-    { n: 'Sliced almonds', q: 1, u: 'tbsp', a: 'pantry' },
-    { n: 'Ground cinnamon', q: 1, u: 'pinch', a: 'pantry' }
-  ],
-  steps: ['Fruit and almonds over the cottage cheese, cinnamon on top.'],
-  note: 'Nearly 30g of protein for 310 calories. Very hard to beat that ratio.'
 },
 {
   id: 'b-avocado-egg-toast', name: 'Avocado and Egg Toast', meal: ['breakfast'],
@@ -142,20 +129,6 @@ export const RECIPES = [
   ],
   note: 'Your insurance policy against a 12-hour day. Grab three and eat them cold in the car.'
 },
-{
-  id: 'b-smoothie', name: 'Yogurt and Berry Smoothie', meal: ['breakfast'],
-  effort: 'zero', minutes: 4, servings: 1, kcal: 330, protein: 25, carbs: 40, fat: 8, fiber: 6,
-  tags: ['no-cook', 'portable', 'high-protein'],
-  ingredients: [
-    { n: 'Plain Greek yogurt, 2%', q: 0.75, u: 'cup', a: 'dairy' },
-    { n: 'Frozen berries', q: 1, u: 'cup', a: 'frozen' },
-    { n: 'Banana', q: 0.5, u: 'whole', a: 'produce' },
-    { n: 'Milk', q: 0.5, u: 'cup', a: 'dairy' },
-    { n: 'Peanut butter', q: 1, u: 'tsp', a: 'pantry' }
-  ],
-  steps: ['Blend for 45 seconds.', 'Drink it within the hour or it separates.']
-},
-
 /* ───────────────────────────── LUNCH ───────────────────────────── */
 {
   id: 'l-big-chicken-salad', name: 'Big Chicken Salad', meal: ['lunch'],
@@ -165,7 +138,7 @@ export const RECIPES = [
     { n: 'Cooked chicken breast, sliced', q: 5, u: 'oz', a: 'protein' },
     { n: 'Romaine lettuce, chopped', q: 3, u: 'cups', a: 'produce' },
     { n: 'Cucumber, sliced', q: 1, u: 'whole', a: 'produce' },
-    { n: 'Cherry tomatoes', q: 1, u: 'cup', a: 'produce' },
+    { n: 'Bell pepper, diced', q: 1, u: 'whole', a: 'produce' },
     { n: 'Red onion, sliced thin', q: 2, u: 'tbsp', a: 'produce' },
     { n: 'Olive oil', q: 2, u: 'tsp', a: 'pantry' },
     { n: 'Red wine vinegar', q: 2, u: 'tsp', a: 'pantry' },
@@ -188,12 +161,12 @@ export const RECIPES = [
     { n: 'Celery, diced', q: 1, u: 'stalk', a: 'produce' },
     { n: 'Lemon juice', q: 1, u: 'tbsp', a: 'produce' },
     { n: 'Romaine lettuce', q: 2, u: 'cups', a: 'produce' },
-    { n: 'Cherry tomatoes', q: 1, u: 'cup', a: 'produce' },
+    { n: 'Bell pepper, sliced', q: 1, u: 'whole', a: 'produce' },
     { n: 'Whole-grain bread', q: 1, u: 'slice', a: 'bakery' }
   ],
   steps: [
     'Mix the tuna with the yogurt, celery, lemon, salt and pepper.',
-    'Serve on the lettuce with the tomatoes and a slice of bread.'
+    'Serve on the lettuce with the pepper strips and a slice of bread.'
   ],
   note: 'Greek yogurt instead of mayonnaise saves about 130 calories, and you genuinely will not miss it here.'
 },
@@ -206,12 +179,12 @@ export const RECIPES = [
     { n: 'Cooked chicken breast, sliced', q: 4, u: 'oz', a: 'protein' },
     { n: 'Hummus', q: 3, u: 'tbsp', a: 'pantry' },
     { n: 'Cucumber, sliced', q: 0.5, u: 'whole', a: 'produce' },
-    { n: 'Tomato, sliced', q: 0.5, u: 'whole', a: 'produce' },
+    { n: 'Bell pepper, sliced', q: 0.5, u: 'whole', a: 'produce' },
     { n: 'Baby spinach', q: 1, u: 'cup', a: 'produce' }
   ],
   steps: [
     'Spread the hummus right to the edges — it is both the glue and the sauce.',
-    'Layer the spinach, chicken, cucumber and tomato.',
+    'Layer the spinach, chicken, cucumber and pepper.',
     'Roll it tight and cut it on the diagonal.'
   ]
 },
@@ -225,11 +198,11 @@ export const RECIPES = [
     { n: 'Celery, diced', q: 1, u: 'stalk', a: 'produce' },
     { n: 'Whole-grain bread', q: 2, u: 'slices', a: 'bakery' },
     { n: 'Romaine lettuce', q: 2, u: 'leaves', a: 'produce' },
-    { n: 'Tomato, sliced', q: 0.5, u: 'whole', a: 'produce' }
+    { n: 'Cucumber, sliced', q: 0.5, u: 'whole', a: 'produce' }
   ],
   steps: [
     'Mix the tuna, yogurt, celery, salt and pepper.',
-    'Onto the bread with the lettuce and tomato.'
+    'Onto the bread with the lettuce and cucumber.'
   ]
 },
 {
@@ -240,7 +213,7 @@ export const RECIPES = [
     { n: 'Rotisserie chicken, pulled', q: 5, u: 'oz', a: 'protein' },
     { n: 'Romaine lettuce, chopped', q: 3, u: 'cups', a: 'produce' },
     { n: 'Cucumber, diced', q: 1, u: 'whole', a: 'produce' },
-    { n: 'Cherry tomatoes, halved', q: 1, u: 'cup', a: 'produce' },
+    { n: 'Bell pepper, diced', q: 1, u: 'whole', a: 'produce' },
     { n: 'White beans, rinsed', q: 0.5, u: 'cup', a: 'pantry' },
     { n: 'Feta cheese', q: 1, u: 'oz', a: 'dairy' },
     { n: 'Olive oil', q: 2, u: 'tsp', a: 'pantry' },
@@ -259,7 +232,7 @@ export const RECIPES = [
     { n: 'Cooked chicken, chopped', q: 4, u: 'oz', a: 'protein' },
     { n: 'Cooked brown rice', q: 0.75, u: 'cup', a: 'pantry' },
     { n: 'Cucumber, diced', q: 0.5, u: 'whole', a: 'produce' },
-    { n: 'Cherry tomatoes', q: 0.75, u: 'cup', a: 'produce' },
+    { n: 'Roasted red peppers, chopped', q: 0.5, u: 'cup', a: 'pantry' },
     { n: 'Olive oil', q: 2, u: 'tsp', a: 'pantry' },
     { n: 'Lemon juice', q: 1, u: 'tbsp', a: 'produce' }
   ],
@@ -270,13 +243,13 @@ export const RECIPES = [
   note: 'This slot exists to absorb last night\'s leftovers. Swap in whatever protein is actually in your fridge.'
 },
 {
-  id: 'l-cucumber-tomato-chicken', name: 'Cucumber, Tomato and Chicken Salad', meal: ['lunch'],
+  id: 'l-cucumber-pepper-chicken', name: 'Cucumber, Pepper and Chicken Salad', meal: ['lunch'],
   effort: 'quick', minutes: 12, servings: 1, kcal: 460, protein: 38, carbs: 22, fat: 26, fiber: 7,
   tags: ['high-protein', 'no-cook', 'low-carb'],
   ingredients: [
     { n: 'Cooked chicken breast, sliced', q: 5, u: 'oz', a: 'protein' },
     { n: 'Cucumber, chunked', q: 1, u: 'whole', a: 'produce' },
-    { n: 'Tomatoes, wedged', q: 2, u: 'whole', a: 'produce' },
+    { n: 'Bell peppers, chunked', q: 2, u: 'whole', a: 'produce' },
     { n: 'Red onion, sliced thin', q: 0.25, u: 'whole', a: 'produce' },
     { n: 'Feta cheese', q: 1.5, u: 'oz', a: 'dairy' },
     { n: 'Olives', q: 8, u: 'whole', a: 'pantry' },
@@ -406,7 +379,7 @@ export const RECIPES = [
     { n: 'Chicken breasts', q: 1, u: 'lb', a: 'protein' },
     { n: 'Romaine lettuce, chopped', q: 6, u: 'cups', a: 'produce' },
     { n: 'Cucumber, sliced', q: 1, u: 'whole', a: 'produce' },
-    { n: 'Cherry tomatoes', q: 2, u: 'cups', a: 'produce' },
+    { n: 'Bell peppers, sliced', q: 2, u: 'whole', a: 'produce' },
     { n: 'Olive oil', q: 2, u: 'tbsp', a: 'pantry' },
     { n: 'Lemon', q: 1, u: 'whole', a: 'produce' },
     { n: 'Feta cheese', q: 2, u: 'oz', a: 'dairy' },
@@ -510,7 +483,7 @@ export const RECIPES = [
     { n: 'Breadcrumbs', q: 3, u: 'tbsp', a: 'pantry' },
     { n: 'Olive oil', q: 2, u: 'tbsp', a: 'pantry' },
     { n: 'Dried oregano', q: 1, u: 'tsp', a: 'pantry' },
-    { n: 'Salad greens, cucumber, tomato', q: null, u: 'to serve', a: 'produce' },
+    { n: 'Salad greens and cucumber', q: null, u: 'to serve', a: 'produce' },
     { n: 'Lemon', q: 1, u: 'whole', a: 'produce' }
   ],
   steps: [
@@ -626,7 +599,7 @@ export const RECIPES = [
   ingredients: [
     { n: 'Rotisserie chicken, skin removed', q: 6, u: 'oz', a: 'protein' },
     { n: 'Bagged salad mix', q: 3, u: 'cups', a: 'produce' },
-    { n: 'Cherry tomatoes', q: 1, u: 'cup', a: 'produce' },
+    { n: 'Cucumber, chunked', q: 1, u: 'whole', a: 'produce' },
     { n: 'White beans, rinsed', q: 0.5, u: 'cup', a: 'pantry' },
     { n: 'Olive oil', q: 1, u: 'tbsp', a: 'pantry' },
     { n: 'Lemon juice or vinegar', q: 1, u: 'tbsp', a: 'produce' }
@@ -656,6 +629,97 @@ export const RECIPES = [
     'Oil, lemon, salt, plenty of pepper. Stir once.'
   ],
   note: 'Keep these cans permanently stocked. This is the meal that stops a bad night becoming a bad week.'
+},
+
+{
+  id: 's-cottage-fruit', name: 'Cottage Cheese with Fruit', meal: ['snack'], maxPortion: 1.5,
+  effort: 'zero', minutes: 3, servings: 1, kcal: 220, protein: 21, carbs: 20, fat: 6, fiber: 3,
+  tags: ['no-cook', 'high-protein'],
+  ingredients: [
+    { n: 'Low-fat cottage cheese', q: 0.75, u: 'cup', a: 'dairy' },
+    { n: 'Berries or canned peaches, drained', q: 0.5, u: 'cup', a: 'produce' },
+    { n: 'Ground cinnamon', q: 1, u: 'pinch', a: 'pantry' }
+  ],
+  steps: ['Fruit over the cottage cheese, cinnamon on top.'],
+  note: 'Buy the small tub. Cottage cheese turns fast, and a big one usually ends up thrown out.'
+},
+{
+  id: 'd-pork-chops', name: 'Pork Chops with Green Beans and Potatoes', meal: ['dinner'],
+  effort: 'standard', minutes: 30, servings: 2, kcal: 520, protein: 44, carbs: 34, fat: 22, fiber: 6,
+  tags: ['high-protein'],
+  ingredients: [
+    { n: 'Pork chops, bone-in', q: 2, u: 'x 6oz', a: 'protein' },
+    { n: 'Baby potatoes, halved', q: 12, u: 'oz', a: 'produce' },
+    { n: 'Green beans', q: 0.75, u: 'lb', a: 'produce' },
+    { n: 'Olive oil', q: 2, u: 'tbsp', a: 'pantry' },
+    { n: 'Garlic, smashed', q: 3, u: 'cloves', a: 'produce' },
+    { n: 'Lemon', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Dried oregano', q: 1, u: 'tsp', a: 'pantry' }
+  ],
+  steps: [
+    'Roast the potatoes at 425F with half the oil and the garlic, 25 minutes.',
+    'Pat the chops dry and salt them well. Sear in the rest of the oil over medium-high, 4 minutes a side.',
+    'Rest the chops 5 minutes before cutting. They keep cooking while they rest.',
+    'Steam or boil the green beans 4 minutes. Lemon and oregano over everything.'
+  ],
+  note: 'Pat them dry and leave them alone in the pan. That is the whole difference between a good chop and a grey one.'
+},
+{
+  id: 'l-chicken-bean-bowl', name: 'Chicken and Refried Bean Bowl', meal: ['lunch', 'dinner'],
+  effort: 'zero', minutes: 6, servings: 1, kcal: 470, protein: 40, carbs: 40, fat: 16, fiber: 9,
+  tags: ['no-cook', 'exhausted', 'high-protein', 'pantry-only'],
+  ingredients: [
+    { n: 'Rotisserie chicken, pulled', q: 5, u: 'oz', a: 'protein' },
+    { n: 'Refried beans', q: 0.5, u: 'cup', a: 'pantry' },
+    { n: 'Romaine lettuce, shredded', q: 2, u: 'cups', a: 'produce' },
+    { n: 'Shredded cheese', q: 1, u: 'oz', a: 'dairy' },
+    { n: 'Bell pepper, diced', q: 0.5, u: 'whole', a: 'produce' },
+    { n: 'Lime or lemon juice', q: 1, u: 'tbsp', a: 'produce' }
+  ],
+  steps: [
+    'Warm the beans in the microwave, 60 seconds.',
+    'Beans on the bottom, chicken on top, then lettuce, pepper and cheese.',
+    'Squeeze of lime. Six minutes, nothing cooked.'
+  ],
+  note: 'A tin of refried beans and a rotisserie chicken is one of the cheapest high-protein dinners there is.'
+},
+{
+  id: 'd-refried-beans-eggs', name: 'Refried Beans with Eggs and Peppers', meal: ['dinner', 'breakfast'],
+  effort: 'quick', minutes: 12, servings: 1, kcal: 450, protein: 25, carbs: 42, fat: 20, fiber: 10,
+  tags: ['quick', 'vegetarian', 'pantry-only', 'high-fiber'],
+  ingredients: [
+    { n: 'Refried beans', q: 0.75, u: 'cup', a: 'pantry' },
+    { n: 'Eggs', q: 2, u: 'large', a: 'protein' },
+    { n: 'Bell pepper, sliced', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Olive oil', q: 2, u: 'tsp', a: 'pantry' },
+    { n: 'Shredded cheese', q: 0.75, u: 'oz', a: 'dairy' },
+    { n: 'Whole-wheat tortilla', q: 1, u: 'whole', a: 'bakery' }
+  ],
+  steps: [
+    'Soften the pepper in the oil, 5 minutes.',
+    'Warm the beans in a small pan or the microwave.',
+    'Fry the eggs in the same pan as the peppers.',
+    'Beans on the tortilla, peppers and eggs on top, cheese over.'
+  ]
+},
+{
+  id: 'd-rotisserie-roast-veg', name: 'Rotisserie Chicken with Roasted Vegetables', meal: ['dinner'],
+  effort: 'quick', minutes: 18, servings: 2, kcal: 480, protein: 44, carbs: 30, fat: 20, fiber: 8,
+  tags: ['quick', 'high-protein', 'one-pan'],
+  ingredients: [
+    { n: 'Rotisserie chicken, skin removed', q: 10, u: 'oz', a: 'protein' },
+    { n: 'Frozen mixed vegetables', q: 4, u: 'cups', a: 'frozen' },
+    { n: 'Baby potatoes, halved', q: 12, u: 'oz', a: 'produce' },
+    { n: 'Olive oil', q: 2, u: 'tbsp', a: 'pantry' },
+    { n: 'Garlic, minced', q: 3, u: 'cloves', a: 'produce' },
+    { n: 'Dried oregano', q: 1, u: 'tsp', a: 'pantry' }
+  ],
+  steps: [
+    'Oven to 425F. Potatoes with the oil, garlic and oregano, roast 25 minutes.',
+    'Add the frozen vegetables straight from the bag for the last 8 minutes.',
+    'Carve the chicken off the bird while it roasts. Warm it through on top for the final 3 minutes.'
+  ],
+  note: 'The bird does the protein, the oven does the rest. Almost no active work.'
 },
 
 /* ───────────────────────────── SNACKS ──────────────────────────── */
@@ -690,18 +754,6 @@ export const RECIPES = [
     { n: 'Hummus', q: 0.25, u: 'cup', a: 'pantry' }
   ],
   steps: ['Buy the carrots pre-cut. The five minutes you save is the difference between eating this and not.']
-},
-{
-  id: 's-cottage-tomato', name: 'Cottage Cheese with Tomato', meal: ['snack'],
-  effort: 'zero', minutes: 3, servings: 1, kcal: 170, protein: 20, carbs: 10, fat: 6, fiber: 1,
-  tags: ['no-cook', 'high-protein'],
-  ingredients: [
-    { n: 'Low-fat cottage cheese', q: 0.75, u: 'cup', a: 'dairy' },
-    { n: 'Cherry tomatoes, halved', q: 0.75, u: 'cup', a: 'produce' },
-    { n: 'Olive oil', q: 1, u: 'tsp', a: 'pantry' },
-    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
-  ],
-  steps: ['Tomatoes over the cottage cheese, olive oil, lots of black pepper.']
 },
 {
   id: 's-cheese-grapes', name: 'Cheese and Grapes', meal: ['snack'], maxPortion: 1.5,
