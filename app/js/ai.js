@@ -11,6 +11,7 @@ import { getState, todayKey, getDay, hoursFor, trendWeight, weightSeries, entrie
 import { targets, dayType, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
 import { BY_ID, recipeIndex } from './recipes.js';
 import { SLOTS } from './planner.js';
+import { weekPosition, safetyFloor } from './intake.js';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
@@ -34,6 +35,8 @@ export function buildContextFile() {
   const series = weightSeries();
   const dow = new Date().getDay();
 
+  const wk = weekPosition();
+  const floor = safetyFloor(p);
   const lost = Math.round((p.startWeight - trend) * 10) / 10;
   const recent = series.slice(-5).map(x => `${x.date}: ${x.weight} lb`).join(', ') || 'no weigh-ins logged yet';
 
@@ -93,9 +96,16 @@ These came from photographs of the actual plates, so they are good estimates, no
 - Estimated goal date at the current rate: ${fmtDate(t.goalDate)}${t.weeksToGoal ? ` (${t.weeksToGoal} weeks)` : ''}.
 - Because of their age, preserving muscle matters as much as losing fat. Protein target is deliberately high and the deficit deliberately moderate.
 
-## Daily targets
-- Maintenance (TDEE): ~${t.maintenance} kcal. Target intake: ${t.kcal} kcal (a ${t.deficit} kcal deficit).
+## The number
+- Keep under ${t.kcal} kcal a day. That is maintenance (~${t.maintenance}) minus a ${t.deficit} deficit, which is ${t.ratePerWeek} lb a week.
+- Across the week that is ${t.kcal * 7} kcal, and THE WEEKLY TOTAL IS WHAT DECIDES THE OUTCOME. A long work day spent over is genuinely cancelled by a day off spent under. Frame it that way whenever they have gone over.
+- Never advise eating below ${floor} kcal in a day, for any reason, including catching up after a heavy week. If the arithmetic to get back on track would need that, say so plainly and tell them to let the week land short instead.
 - Protein ${t.protein} g · Carbs ${t.carbs} g · Fat ${t.fat} g · Fiber ${t.fiber} g.
+
+## Where the week stands
+- ${wk.usedTotal} kcal used of ${wk.budget} budgeted, with ${wk.daysLeft} day(s) left including today.
+- ${wk.drift === 0 ? 'Exactly on pace.' : wk.drift > 0 ? `Running ${wk.drift} kcal OVER pace.` : `Running ${-wk.drift} kcal UNDER pace — that is banked.`}
+- To land the week on target, the remaining days average ${wk.perDay} kcal each.${wk.perDay < floor ? ` That is below the ${floor} floor, so do NOT recommend it — tell them to hold at ${t.kcal} and accept the week finishing short.` : ''}
 ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the floor.\n' : ''}
 ## Work life — this drives everything
 - Typical week: ${sched} (${weeklyHours(p.workHours)} h/week total).
@@ -152,6 +162,7 @@ ${recipeIndex()}
 - When they slip, be matter-of-fact and forward-looking. One bad meal is noise. Never shame, never moralise about food.
 - If they ask about medication, a medical symptom, a supplement, or anything clinical, give general information and tell them plainly to check with their doctor or pharmacist — especially for blood-pressure or diabetes medication, where losing weight genuinely changes dosing needs.
 - Never invent a nutrition number precisely. Say "roughly 450 calories", not "451 calories".
+- When they ask what they should be keeping under, answer with the single daily number first, then the weekly total. Do not give them a third figure to remember. If they have gone over, lead with the week, not the day — that is the difference between a recoverable slip and a reason to quit.
 - Do not recommend dropping below their calorie floor, fasting protocols they did not ask about, or any supplement.`;
 }
 
@@ -286,5 +297,6 @@ export const QUICK_PROMPTS = [
   { icon: '📉', label: 'The scale went up', text: 'The scale went up this week even though I stuck to the plan. Explain what is actually happening and what, if anything, I should change.' },
   { icon: '🛒', label: 'What should I always keep in?', text: 'What should I permanently keep stocked so I am never more than ten minutes from a decent Mediterranean meal?' },
   { icon: '💪', label: 'Am I getting enough protein?', text: 'Look at my targets and my plan for this week. Am I actually hitting enough protein to protect my muscle at my age? Be specific about where I fall short.' },
-  { icon: '📷', label: 'How is today going?', text: 'Look at what I have actually logged today against my targets. Where am I, and what should the rest of the day look like? Be specific about protein.' }
+  { icon: '📷', label: 'How is today going?', text: 'Look at what I have actually logged today against my targets. Where am I, and what should the rest of the day look like? Be specific about protein.' },
+  { icon: '🎯', label: 'What should I keep under?', text: 'What number should I be keeping under, and where does it come from? Then tell me where I am against it for the week so far, and whether I need to change anything.' }
 ];

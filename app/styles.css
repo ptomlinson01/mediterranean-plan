@@ -183,6 +183,27 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .meal .m-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
 .meal .m-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
 
+/* ── the week at a glance ──────────────────────────────── */
+/* Seven columns. The faint line across each is the daily target, so being
+   over or under is legible without reading a single number. */
+.wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 0 2px; }
+.wk-d { text-align: center; min-width: 0; }
+.wk-bar {
+  position: relative; height: 62px; border-radius: 7px;
+  background: var(--surface-2); display: flex; align-items: flex-end; overflow: hidden;
+}
+.wk-bar::before {                       /* the daily target, at 1/1.4 of full height */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 71.4%; height: 0;
+  border-top: 1px dashed color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.wk-bar > i { width: 100%; border-radius: 7px 7px 0 0; background: var(--sea); transition: height .3s ease; }
+.wk-d.under .wk-bar > i { background: var(--olive); }
+.wk-d.over  .wk-bar > i { background: var(--terra); }
+.wk-d.future .wk-bar { opacity: .5; }
+.wk-d.now .wk-bar { outline: 2px solid var(--sea); outline-offset: 1px; }
+.wk-d > span { display: block; margin-top: 6px; font-size: 11px; font-weight: 650; color: var(--muted); }
+.wk-d.now > span { color: var(--sea); }
+
 /* ── logging what you ate ──────────────────────────────── */
 .hero-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
 .hero-macros .hm b { display: block; font-size: 15px; font-weight: 650; }

@@ -4,15 +4,16 @@ import {
   getState, update, save, resetAll, todayKey, parseKey, getDay, setDay,
   hoursFor, weightSeries, trendWeight, exportJSON, importJSON,
   entriesFor, addEntry, updateEntry, removeEntry, newEntryId, sumEntries,
-  dayIntake, referencedPhotoIds,
+  referencedPhotoIds,
   DAY_NAMES, DAY_FULL
 } from './store.js';
-import { targets, dayType, ACTIVITY, slotBudget, weeklyHours, fmtDate } from './nutrition.js';
+import { targets, dayType, bmr, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
 import { RECIPES, BY_ID, EFFORT_LABEL } from './recipes.js';
 import { buildWeek, swapSlot, retuneDay, groceryList, fmtQty, dayTotals, SLOTS } from './planner.js';
 import { askCoach, testKey, contextPack, buildContextFile, QUICK_PROMPTS, ApiError } from './ai.js';
 import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
+import { countedForDay, weekPosition, safetyFloor, MACRO_KEYS } from './intake.js';
 
 /* ── tiny helpers ──────────────────────────────────────────────── */
 
@@ -283,7 +284,8 @@ function renderToday() {
      "here is what I actually ate". Both are real, so both are added. */
   const logged = entriesFor(key);
   const fromPhotos = sumEntries(logged);
-  const ate = countedToday(key);
+  const ate = countedForDay(key);
+  const wk = weekPosition();
   const eaten = ate.kcal;
   const protein = ate.protein;
   const left = t.kcal - eaten;
@@ -332,7 +334,7 @@ function renderToday() {
       <div>
         <div class="big">${left > 0 ? left : 0}<span class="unit"> kcal left</span></div>
         <div class="small" style="opacity:.85;margin-top:4px">
-          ${left < 0 ? `${-left} over · ` : ''}of ${t.kcal} today · ${eaten} eaten</div>
+          ${left < 0 ? `${n0(-left)} over · ` : ''}keep under ${n0(t.kcal)} today · ${n0(eaten)} eaten</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700">${protein}<span style="font-size:13px;opacity:.8">g</span></div>
@@ -365,6 +367,22 @@ function renderToday() {
            Take a picture of anything you eat and it lands here with calories and protein worked out.
            The coach reads this, so it stops guessing what kind of day you have had.
          </div>`}
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <h3>This week</h3>
+      <button class="tiny" id="whyNum">Why ${n0(t.kcal)}?</button>
+    </div>
+    <div class="spread small muted">
+      <span><strong style="color:var(--ink);font-size:15px">${n0(wk.usedTotal)}</strong> used</span>
+      <span>of ${n0(wk.budget)} this week</span>
+    </div>
+    <div class="bar ${wk.usedTotal > wk.budget ? 'over' : 'olive'}">
+      <i style="width:${Math.min(100, Math.round((wk.usedTotal / wk.budget) * 100))}%"></i>
+    </div>
+    ${weekStrip(wk)}
+    <div class="note" style="margin-bottom:0">${esc(weekAdvice(wk))}</div>
   </div>
 
   <div class="card">
@@ -419,6 +437,8 @@ function renderToday() {
   });
   paintThumbs();
 
+  $('#whyNum').onclick = showNumberExplainer;
+
   $('#hMinus').onclick = () => bumpHours(-1);
   $('#hPlus').onclick = () => bumpHours(1);
   $('#wSave').onclick = () => {
@@ -462,6 +482,108 @@ function bumpHours(delta) {
   renderToday();
 }
 
+/* ═══════════════════════ THE NUMBER ═══════════════════════════ */
+
+/* One daily limit, and a weekly total sitting behind it.
+
+   The daily number never moves — there is exactly one figure to remember,
+   and it is the answer to "what am I keeping under today". But the number
+   that decides whether the weight actually comes off is the weekly one,
+   because a body cannot tell it is Tuesday. Showing both is what stops a
+   twelve-hour day where you went over from reading as a failed week: it
+   was 400 calories, and Sunday is a day off.
+
+   The one rule this must never break: never advise eating below the safety
+   floor to claw back a bad week. When the arithmetic would demand that, it
+   says so and tells them to let the week land short instead. */
+
+const n0 = v => Math.round(v).toLocaleString();
+
+function weekAdvice(w) {
+  const p = getState().profile;
+  const floor = safetyFloor(p);
+  const drift = Math.round(w.drift);
+
+  if (w.todayIdx === 0) return `Fresh week. ${n0(w.budget)} to spend across it — today sets the tone.`;
+  if (Math.abs(drift) < 250) return `Right on track. Stick to ${n0(w.t.kcal)} a day and the week lands where it should.`;
+
+  if (drift < 0) {
+    return `You are ${n0(-drift)} under for the week so far. That is banked — you could eat about ${n0(w.perDay)} a day for the rest of it and still be exactly on target.`;
+  }
+  if (w.perDay >= floor) {
+    return `You are ${n0(drift)} over for the week so far. Aim nearer ${n0(w.perDay)} a day for the rest of it and it evens out.`;
+  }
+  // Clawing this back would mean eating under the floor. Don't ask for that.
+  const short = Math.max(0.1, drift / 3500).toFixed(1);
+  return `You are ${n0(drift)} over for the week. Do not try to claw that back — eating under ${n0(floor)} is not safe and it does not work. Hold at ${n0(w.t.kcal)}, let this week land about ${short} lb behind, and start Sunday clean.`;
+}
+
+function weekStrip(w) {
+  const ceiling = w.t.kcal * 1.4;
+  return `<div class="wk">${w.days.map(d => {
+    const h = d.kcal == null ? 0 : Math.min(100, Math.round((d.kcal / ceiling) * 100));
+    const cls = d.future ? 'future' : (d.kcal > w.t.kcal ? 'over' : 'under');
+    const title = d.future ? `${d.name}: still to come` : `${d.name}: ${n0(d.kcal)} kcal`;
+    return `<div class="wk-d ${cls}${d.isToday ? ' now' : ''}" title="${esc(title)}">
+      <div class="wk-bar"><i style="height:${h}%"></i></div>
+      <span>${d.name[0]}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/** The whole calculation, in order, in plain English. */
+function showNumberExplainer() {
+  const p = getState().profile;
+  const t = targets(p);
+  const base = bmr(p);
+  const act = ACTIVITY[p.activity] || ACTIVITY.light;
+  const ft = Math.floor(p.heightIn / 12);
+  const inch = p.heightIn % 12;
+  const floor = safetyFloor(p);
+  const lo = Math.round(t.kcal * 0.9 / 10) * 10;
+  const hi = Math.round(t.kcal * 1.1 / 10) * 10;
+
+  openSheet(`
+    <h2>Where ${n0(t.kcal)} comes from</h2>
+    <p class="small muted">Nobody sticks to a number they don't understand. Here is the whole calculation, in order.</p>
+
+    <ol class="steps">
+      <li><strong>${n0(base)} a day just to exist.</strong>
+        That is what your body burns keeping you alive — heartbeat, breathing, staying warm — before you move at all. It comes from your age (${p.age}), height (${ft}′${inch}″), weight (${p.currentWeight} lb) and sex.</li>
+      <li><strong>${n0(t.maintenance)} once you add moving about.</strong>
+        You told us: ${esc(act.label.toLowerCase())}. That multiplies the first figure by ${act.mult}. This is what you would eat to stay exactly the weight you are — no loss, no gain.</li>
+      <li><strong>Take off ${n0(t.deficit)} a day to actually lose.</strong>
+        A pound of fat is roughly 3,500 calories, so shifting ${t.ratePerWeek} lb a week means running about ${n0(t.deficit)} short every day.</li>
+      <li><strong>${n0(t.maintenance)} − ${n0(t.deficit)} = ${n0(t.kcal)}.</strong>
+        That is your number. Keep under it and the weight comes off at roughly ${t.ratePerWeek} lb a week.</li>
+    </ol>
+
+    ${t.floored ? `<div class="warn">The rate you picked would have pushed this below a safe floor, so it was raised to ${n0(t.kcal)}. Weight will come off a little slower. That is the right trade.</div>` : ''}
+
+    <div class="note">
+      <strong>The week is what counts, not the day.</strong>
+      Your body cannot tell it is Tuesday. <strong>${n0(t.kcal * 7)} across the week</strong> is what decides whether the weight moves — so a twelve-hour day where you go over is genuinely cancelled out by a Sunday where you don't. Aim at the week and the days take care of themselves.
+    </div>
+
+    <h3>Why not go lower</h3>
+    <p>You could lose faster by eating less. You should not, and this is the one place your age changes the answer. Past about fifty-five, a hard deficit takes muscle along with the fat, and muscle is what keeps your metabolism up. Lose it now and in a year you are heavier, hungrier, and burning less than when you started. So the cut here is capped at a quarter of what you burn, and floored at ${n0(floor)} calories whatever else you ask for.</p>
+
+    <h3>What this number is not</h3>
+    <ul>
+      <li><strong>It is not exact.</strong> Metabolism estimates land within about 10% for most people, so read ${n0(t.kcal)} as somewhere around ${n0(lo)}–${n0(hi)}. If the scale has not moved after three or four honest weeks, the estimate is wrong for you — drop it by 150 and watch another fortnight.</li>
+      <li><strong>It is not a pass or fail line.</strong> Over on a Tuesday is not failure. Over every Tuesday is a pattern worth a look.</li>
+    </ul>
+
+    <h3>What changes it</h3>
+    <p>Your weight — it recalculates every time you weigh in, so the number drifts down as you do. Your activity level, and how fast you want to lose, both under Me → Profile. Nothing else moves it.</p>
+
+    <div class="divider"></div>
+    <div class="spread"><span class="muted">On track for ${p.goalWeight} lb</span><strong>${fmtDate(t.goalDate)}</strong></div>
+    <button class="primary" id="xClose" style="width:100%;margin-top:16px">Got it</button>`);
+
+  $('#xClose').onclick = closeSheet;
+}
+
 /* ═════════════════════ LOGGING WHAT YOU ATE ═══════════════════ */
 
 /* The estimate is a first draft, never a fact. It goes into `draft`, gets
@@ -469,8 +591,6 @@ function bumpHours(delta) {
    person presses Save. That review step is the whole feature — an app that
    silently banks a wrong calorie count is an app you stop believing, and an
    app you stop believing is one you stop opening. */
-
-const MACRO_KEYS = ['kcal', 'protein', 'carbs', 'fat', 'fiber'];
 
 let draft = null;
 let captureCtl = null;
@@ -483,29 +603,6 @@ function itemTotals(items) {
   const out = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
   for (const it of items || []) {
     for (const m of MACRO_KEYS) out[m] += Math.round(Number(it[m]) || 0);
-  }
-  return out;
-}
-
-/** Everything counted against today so far — ticked plan meals plus logged
-    meals — optionally ignoring one entry, for when that entry is being edited. */
-function countedToday(key, exceptEntryId = null) {
-  const s = getState();
-  const di = planDayIndex(key);
-  const pd = di >= 0 ? s.plan.days[di] : null;
-  const done = getDay(key).done || [];
-  const out = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
-
-  if (pd) for (const slot of done) {
-    const sl = pd.slots[slot];
-    const r = BY_ID[sl?.recipeId];
-    if (!r) continue;
-    const n = sl.portions || 1;
-    for (const m of MACRO_KEYS) out[m] += Math.round((r[m] || 0) * n);
-  }
-  for (const e of entriesFor(key)) {
-    if (e.id === exceptEntryId) continue;
-    for (const m of MACRO_KEYS) out[m] += Math.round(Number(e[m]) || 0);
   }
   return out;
 }
@@ -748,7 +845,7 @@ function paintTotals() {
   if (!box || !draft) return;
   const tot = itemTotals(draft.items);
   const t = targets(getState().profile);
-  const others = countedToday(draft.key, draft.entryId);
+  const others = countedForDay(draft.key, draft.entryId);
   const after = others.kcal + tot.kcal;
   const proteinAfter = others.protein + tot.protein;
   const over = after > t.kcal;
@@ -1193,7 +1290,12 @@ function renderMe() {
 
   $('#meHost').innerHTML = `
   <div class="card">
-    <div class="card-title"><h3>Your numbers</h3></div>
+    <div class="card-title"><h3>Your numbers</h3>
+      <button class="tiny" id="whyNum2">Where from?</button></div>
+    <p style="margin-bottom:14px">Keep under <strong>${n0(t.kcal)} calories</strong> a day — which is
+      <strong>${n0(t.kcal * 7)} across the week</strong>, and the week is the total that actually
+      decides whether the weight moves. At that rate you reach ${p.goalWeight} lb around
+      ${fmtDate(t.goalDate)}.</p>
     <div class="macro-row" style="margin-top:0">
       <div class="macro"><b>${t.kcal}</b>kcal/day</div>
       <div class="macro"><b>${t.protein}g</b>protein</div>
@@ -1315,6 +1417,7 @@ function renderMe() {
   </div>
   <p class="small muted center" style="padding-bottom:20px">Calorie and macro figures are good-faith estimates, not laboratory values.</p>`;
 
+  $('#whyNum2').onclick = showNumberExplainer;
   $('#ctxCopy').onclick = () => copy(buildContextFile(), 'Context file copied.');
   $('#saveNotes').onclick = () => { update(st => { st.profile.notes = $('#pNotes').value; }); toast('Saved.'); renderMe(); };
 
