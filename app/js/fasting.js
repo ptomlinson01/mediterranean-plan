@@ -14,11 +14,11 @@
    kitchen, a closing time is a better tool than arithmetic. That is the
    honest case for it, and it is a good one.
 
-   The honest case against, for this particular user: he is sixty, and this
-   whole app exists on the premise that at his age the risk is losing muscle
-   rather than fat. Protein is the defence, and 134g inside an eight-hour
-   window is harder than 134g across a day. That trade-off gets said out
-   loud rather than buried.
+   The honest case against, for the people this app is built for: past
+   about fifty-five the risk of a diet is losing muscle rather than fat.
+   Protein is the defence, and a day's worth of it inside an eight-hour
+   window is harder than the same amount spread across a day. That
+   trade-off gets said out loud rather than buried.
 
    And there is real screening here, not a disclaimer. Fasting interacts
    badly and specifically with some medication — insulin and the older
