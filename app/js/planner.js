@@ -45,7 +45,7 @@ const ALLERGEN_SYNONYMS = {
   sesame:    ['tahini', 'sesame', 'za’atar', "za'atar", 'hummus']
 };
 
-function tokenize(text) {
+export function tokenize(text) {
   const raw = (text || '')
     .toLowerCase()
     .split(/[,;\n]+/)
@@ -68,7 +68,7 @@ const rxEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Does this recipe collide with anything the user won't or can't eat?
     Whole-word matching, so "egg" doesn't wrongly knock out eggplant. */
-function blocked(recipe, banned) {
+export function blocked(recipe, banned) {
   if (!banned.length) return false;
   const hay = [
     recipe.name,
@@ -89,7 +89,17 @@ function blocked(recipe, banned) {
  * @param proteinTarget  daily protein goal, used for the protein rescue pass
  * @returns { weekStart, days: [{date, dow, hours, type, slots:{slot:{recipeId, leftover, kcal}}, totals}] }
  */
+/** The slots this person actually wants planned for them. */
+export function mySlots(profile) {
+  const who = profile?.whoCooks || {};
+  const mine = SLOTS.filter(s => (who[s] || 'me') === 'me');
+  // Never hand back an empty week; if they have opted out of everything,
+  // treat that as a misconfiguration rather than planning nothing.
+  return mine.length ? mine : SLOTS;
+}
+
 export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
+  const PLAN_SLOTS = mySlots(profile);
   const rand = rng(seed);
   const banned = [...tokenize(profile.dislikes), ...tokenize(profile.allergies)];
   const pool = RECIPES.filter(r => !blocked(r, banned));
@@ -103,8 +113,18 @@ export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
     days.push({
       date: keyOf(date), dow, dayName: DAY_NAMES[dow], hours,
       type: dayType(hours), budget: slotBudget(kcal, hours),
-      slots: {}, batchDay: false
+      slots: {}, batchDay: false,
+      /* Meals someone else handles. Kept with their calorie budget rather
+         than dropped silently, so the day still reads as a whole day and
+         they know roughly what a sensible plateful looks like. */
+      otherSlots: {}
     });
+  }
+
+  for (const day of days) {
+    for (const slot of SLOTS) {
+      if (!PLAN_SLOTS.includes(slot)) day.otherSlots[slot] = day.budget[slot];
+    }
   }
 
   // 1. Pick the batch-cook day: fewest work hours, earliest wins ties.
@@ -122,14 +142,17 @@ export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
 
   const used = [];  // recipeIds in assignment order, for variety scoring
 
-  // 3a. Seed the batch day with a dinner batch and a lunch batch.
+  // 3a. Seed the batch day with a dinner batch and a lunch batch — but only
+  //     for the meals this person actually handles themselves.
   const batchDay = days[batchIdx];
-  const dinnerBatch = pickBatch(pool, 'dinner', batchDay, banned, rand, used);
+  const dinnerBatch = PLAN_SLOTS.includes('dinner')
+    ? pickBatch(pool, 'dinner', batchDay, banned, rand, used) : null;
   if (dinnerBatch) {
     assign(batchDay, 'dinner', dinnerBatch, false);
     leftovers.push({ recipeId: dinnerBatch.id, meals: dinnerBatch.meal, portions: dinnerBatch.servings - 1, from: batchIdx });
   }
-  const lunchBatch = pickBatch(pool, 'lunch', batchDay, banned, rand, used);
+  const lunchBatch = PLAN_SLOTS.includes('lunch')
+    ? pickBatch(pool, 'lunch', batchDay, banned, rand, used) : null;
   if (lunchBatch) {
     assign(batchDay, 'lunch', lunchBatch, false);
     leftovers.push({ recipeId: lunchBatch.id, meals: lunchBatch.meal, portions: lunchBatch.servings - 1, from: batchIdx });
@@ -142,7 +165,7 @@ export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
     .sort((a, b) => b.h - a.h || a.i - b.i)
     .map(x => x.i);
 
-  for (const slot of SLOTS) {
+  for (const slot of PLAN_SLOTS) {
     for (const di of order) {
       const day = days[di];
       if (day.slots[slot]) continue;

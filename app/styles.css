@@ -183,6 +183,58 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .meal .m-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
 .meal .m-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
 
+/* ── meal prep ─────────────────────────────────────────── */
+.prep-slot {
+  display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+  padding: 13px; margin-bottom: 9px; border-radius: 13px;
+}
+.prep-slot:last-child { margin-bottom: 0; }
+.prep-slot .ps-ico { font-size: 25px; flex: none; line-height: 1; }
+.prep-slot .ps-body { flex: 1; min-width: 0; display: block; }
+.prep-slot .ps-body strong { display: block; margin-bottom: 2px; }
+.prep-slot .ps-body .small { display: block; font-weight: 400; line-height: 1.35; }
+.prep-slot .ps-go { flex: none; color: var(--muted); font-size: 22px; }
+
+.bigpick { font-size: 24px; font-weight: 700; padding: 16px 0; }
+
+.prep-opt {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.prep-opt:last-child { border-bottom: none; }
+.prep-opt .po-tick {
+  flex: none; width: 26px; height: 26px; border-radius: 50%; margin-top: 2px;
+  border: 2px solid var(--border); display: grid; place-items: center;
+  font-size: 14px; color: transparent;
+}
+.prep-opt.on { background: var(--olive-soft); }
+.prep-opt.on .po-tick { background: var(--olive); border-color: var(--olive); color: #fff; }
+.prep-opt .po-body { flex: 1; min-width: 0; }
+.prep-opt .po-meta {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin-top: 5px; font-size: 13px; color: var(--muted);
+}
+
+/* The verdict card changes colour so the answer is legible before reading. */
+.card.ok      { border-color: var(--olive); background: var(--olive-soft); }
+.card.stretch { border-color: #C79A3F; background: #FDF1DC; }
+.card.toomuch { border-color: var(--terra); background: var(--terra-soft); }
+.card.none    { border-style: dashed; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card.stretch { background: #33270F; border-color: #A8802F; }
+}
+
+.stockrow { padding: 10px 0; border-bottom: 1px solid var(--border); align-items: center; }
+.stockrow:last-child { border-bottom: none; }
+.stockrow.gone strong { color: var(--muted); text-decoration: line-through; }
+
+.otherslot {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.otherslot:last-child { border-bottom: none; }
+
 /* ── the week at a glance ──────────────────────────────── */
 /* Seven columns. The faint line across each is the daily target, so being
    over or under is legible without reading a single number. */
@@ -308,7 +360,7 @@ button.tiny.danger { color: var(--terra); }
 .tabbar[hidden] { display: none; }
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   padding-bottom: env(safe-area-inset-bottom);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: saturate(160%) blur(14px);
@@ -320,7 +372,10 @@ button.tiny.danger { color: var(--terra); }
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   font-size: 10.5px; font-weight: 650; color: var(--muted); letter-spacing: .01em;
 }
-.tabbar button .t-ico { font-size: 21px; line-height: 1; }
+.tabbar button .t-ico { font-size: 20px; line-height: 1; }
+/* Six tabs on a 390px phone leaves ~65px each — the label has to shrink
+   before it wraps, because a wrapped tab label makes the whole bar jump. */
+@media (max-width: 400px) { .tabbar button { font-size: 9.5px; padding: 8px 0 10px; } }
 .tabbar button.active { color: var(--sea); }
 
 /* ── sheet / modal ─────────────────────────────────────── */

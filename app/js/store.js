@@ -24,7 +24,12 @@ const DEFAULT_STATE = {
     allergies: '',
     conditions: '',
     kitchen: ['oven', 'stovetop'],
-    notes: ''
+    notes: '',
+    /* Who actually handles each meal. Planning seven dinners a week for
+       someone whose partner cooks them is not a small annoyance — it is a
+       quarter of the plan that is not theirs to do, and it is most of why
+       the week reads as a wall. 'me' | 'other' | 'skip'. */
+    whoCooks: { breakfast: 'me', lunch: 'me', dinner: 'me', snack: 'me' }
   },
   settings: {
     apiKey: '',
@@ -39,6 +44,9 @@ const DEFAULT_STATE = {
   log: {},
   plan: null,                 // { weekStart: 'YYYY-MM-DD', days: [...] }
   grocery: { checked: [], generatedFor: null },
+  /* What is currently made and sitting in the fridge, so the app can answer
+     "what can I eat right now" at 9pm without you opening a container. */
+  prepStock: [],
   chat: [],
   version: 1
 };

@@ -111,6 +111,14 @@ export const RECIPES = [
 {
   id: 'b-egg-muffins', name: 'Egg and Vegetable Muffins', meal: ['breakfast'],
   effort: 'project', minutes: 45, servings: 4, batch: true, kcal: 285, protein: 23, carbs: 8, fat: 18, fiber: 2,
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 15, keepsDays: 5,
+    keeps: '5 days in the fridge.',
+    freezes: true,
+    containers: 'One tub. Three muffins is one breakfast.',
+    reheat: '30 seconds in the microwave, or eat them cold in the car.',
+    firstTimer: false
+  },
   tags: ['batch', 'portable', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Eggs', q: 10, u: 'large', a: 'protein' },
@@ -265,6 +273,14 @@ export const RECIPES = [
 {
   id: 'l-chicken-veg-soup', name: 'Chicken and Vegetable Soup', meal: ['lunch', 'dinner'],
   effort: 'project', minutes: 45, servings: 5, batch: true, kcal: 380, protein: 32, carbs: 34, fat: 12, fiber: 6,
+  prep: {
+    kind: 'cook', makes: 5, activeMin: 20, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: true,
+    containers: '5 lidded tubs, or 3 tubs and 2 freezer bags.',
+    reheat: '3 minutes in the microwave, or 6 in a pan.',
+    firstTimer: false
+  },
   tags: ['batch', 'meal-prep', 'high-protein', 'freezes'],
   ingredients: [
     { n: 'Chicken breast or thighs', q: 1.5, u: 'lb', a: 'protein' },
@@ -330,6 +346,14 @@ export const RECIPES = [
 {
   id: 'd-chicken-thighs-peppers', name: 'Chicken Thighs with Peppers and Potatoes', meal: ['dinner'],
   effort: 'project', minutes: 50, servings: 4, batch: true, kcal: 515, protein: 42, carbs: 30, fat: 26, fiber: 6,
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 15, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: true,
+    containers: '4 lidded boxes, or 2 if you are eating two portions tonight.',
+    reheat: '3 minutes in the microwave.',
+    firstTimer: false
+  },
   tags: ['batch', 'one-pan', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Chicken thighs, boneless skinless', q: 2, u: 'lb', a: 'protein' },
@@ -353,6 +377,14 @@ export const RECIPES = [
 {
   id: 'd-roast-chicken-veg', name: 'Roast Chicken and Vegetables', meal: ['dinner'],
   effort: 'project', minutes: 55, servings: 4, batch: true, kcal: 485, protein: 43, carbs: 28, fat: 23, fiber: 7,
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 20, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: true,
+    containers: '4 lidded boxes.',
+    reheat: '3 minutes in the microwave. The vegetables soften; that is normal.',
+    firstTimer: false
+  },
   tags: ['batch', 'one-pan', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Chicken thighs, bone-in', q: 8, u: 'whole', a: 'protein' },
@@ -808,6 +840,316 @@ export const RECIPES = [
     'Two squares. Then the kitchen is closed for the night.'
   ],
   note: 'A planned 95-calorie treat at 9pm prevents the unplanned 600-calorie one at 10pm. This is a tool, not a cheat.'
+},
+
+/* ─────────────────── THINGS YOU MAKE AHEAD ──────────────────────
+
+   Everything below is written to be made once and eaten several times.
+   Each carries a `prep` block, which is the part a first-timer actually
+   needs: how many it makes, how long it survives in the fridge, what to
+   put it in, and how to bring it back to life.
+
+   Two kinds, and the difference matters more than it sounds:
+
+     kind: 'cook'     — heat is involved, it takes a slot in your Sunday.
+     kind: 'portion'  — no cooking at all. You are dividing food into
+                        containers. Ten minutes, no skill, and it is the
+                        single highest-return thing on this list.
+
+   The night snack is the reason this section exists. Nobody eats a bag of
+   crisps at 9pm because they wanted crisps. They eat them because crisps
+   were the only thing in the house that required no decision. Portioning
+   six things on a Sunday is how you win that argument in advance. */
+
+/* ── night snacks: portioning jobs, not cooking ── */
+{
+  id: 'p-snack-boiled-eggs', name: 'A Half-Dozen Boiled Eggs', meal: ['snack', 'breakfast'], maxPortion: 1.5,
+  effort: 'quick', minutes: 15, servings: 6, batch: true, kcal: 160, protein: 13, carbs: 2, fat: 11, fiber: 0,
+  tags: ['batch', 'meal-prep', 'high-protein', 'evening'],
+  prep: {
+    kind: 'cook', makes: 6, activeMin: 5, keepsDays: 7,
+    keeps: 'A week in the fridge, in their shells.',
+    freezes: false,
+    containers: 'Leave them in the egg box, or one bowl.',
+    reheat: 'None. Eat them cold, straight from the fridge.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Eggs', q: 6, u: 'large', a: 'protein' },
+    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
+  ],
+  steps: [
+    'Eggs in a pan, cover them with cold water by an inch.',
+    'Bring to the boil, then take the pan off the heat, put the lid on, and leave it 11 minutes.',
+    'Into cold water for 5 minutes. This is what makes them peel properly.',
+    'Back in the egg box, in the fridge. Leave the shells on until you eat one.'
+  ],
+  note: 'Two eggs is 160 calories and 13g of protein at 9pm. It is the most useful five minutes you will spend on a Sunday.'
+},
+{
+  id: 'p-snack-nut-bags', name: 'Nuts, Already Portioned', meal: ['snack'], maxPortion: 1,
+  effort: 'zero', minutes: 6, servings: 6, batch: true, kcal: 170, protein: 6, carbs: 6, fat: 15, fiber: 3,
+  tags: ['no-cook', 'batch', 'meal-prep', 'portable', 'evening'],
+  prep: {
+    kind: 'portion', makes: 6, activeMin: 6, keepsDays: 30,
+    keeps: 'Weeks. They are nuts.',
+    freezes: false,
+    containers: '6 small sandwich bags or little tubs.',
+    reheat: 'None.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Mixed nuts, unsalted', q: 1.5, u: 'cups', a: 'pantry' },
+    { n: 'Small sandwich bags', q: 6, u: 'bags', a: 'other' }
+  ],
+  steps: [
+    'A small handful into each bag — about a quarter cup, roughly what fits in your cupped palm.',
+    'Six bags. Put them where you can see them, not at the back of the cupboard.',
+    'At night you eat one bag. Then it is finished, because the bag is empty.'
+  ],
+  note: 'The whole point is the bag. Nuts from the tub is 600 calories and you will not notice. Nuts from a bag is 170 and you will stop.'
+},
+{
+  id: 'p-snack-veg-sticks', name: 'Carrot and Pepper Sticks in Water', meal: ['snack'], maxPortion: 2,
+  effort: 'zero', minutes: 12, servings: 5, batch: true, kcal: 80, protein: 2, carbs: 14, fat: 2, fiber: 4,
+  tags: ['no-cook', 'batch', 'meal-prep', 'evening'],
+  prep: {
+    kind: 'portion', makes: 5, activeMin: 12, keepsDays: 5,
+    keeps: '5 days, and they stay properly crisp because of the water.',
+    freezes: false,
+    containers: 'One big tub with a lid, or a jug.',
+    reheat: 'None.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Carrots', q: 6, u: 'whole', a: 'produce' },
+    { n: 'Bell peppers', q: 2, u: 'whole', a: 'produce' },
+    { n: 'Hummus', q: 1, u: 'tub', a: 'dairy' }
+  ],
+  steps: [
+    'Cut the carrots and peppers into sticks about the length of your finger.',
+    'Into a tub, then cover them with cold water and put the lid on.',
+    'The water is not optional — it is the difference between crisp on Thursday and dry and bendy on Tuesday.',
+    'Take out a handful, shake the water off, dip in hummus.'
+  ],
+  note: 'Something to crunch on is half of what you are actually after at night.'
+},
+{
+  id: 'p-snack-yogurt-pots', name: 'Yogurt Pots with Cinnamon', meal: ['snack', 'breakfast'], maxPortion: 1,
+  effort: 'zero', minutes: 8, servings: 5, batch: true, kcal: 155, protein: 18, carbs: 12, fat: 4, fiber: 1,
+  tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
+  prep: {
+    kind: 'portion', makes: 5, activeMin: 8, keepsDays: 5,
+    keeps: '5 days in the fridge.',
+    freezes: false,
+    containers: '5 small pots or jars with lids.',
+    reheat: 'None.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Plain Greek yogurt, 2%', q: 5, u: 'cups', a: 'dairy' },
+    { n: 'Cinnamon', q: 2, u: 'tsp', a: 'pantry' },
+    { n: 'Honey', q: 5, u: 'tsp', a: 'pantry' }
+  ],
+  steps: [
+    'A cup of yogurt into each pot.',
+    'A good shake of cinnamon and a teaspoon of honey on each. Stir it through or leave it on top.',
+    'Lids on, into the fridge. Five pots.'
+  ],
+  note: '18g of protein for 155 calories. Cinnamon makes plain yogurt taste like it was sweetened far more than it was.'
+},
+{
+  id: 'p-snack-cottage-fruit', name: 'Cottage Cheese Pots with Fruit', meal: ['snack'], maxPortion: 1,
+  effort: 'zero', minutes: 8, servings: 4, batch: true, kcal: 170, protein: 16, carbs: 16, fat: 5, fiber: 2,
+  tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
+  prep: {
+    kind: 'portion', makes: 4, activeMin: 8, keepsDays: 4,
+    keeps: '4 days. Cottage cheese goes off faster than yogurt, so buy it the day you portion it.',
+    freezes: false,
+    containers: '4 small pots with lids.',
+    reheat: 'None.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Cottage cheese, 2%', q: 3, u: 'cups', a: 'dairy' },
+    { n: 'Tinned peaches or pineapple in juice, drained', q: 1, u: 'tin', a: 'pantry' }
+  ],
+  steps: [
+    'Three-quarters of a cup of cottage cheese into each pot.',
+    'Drain the fruit well and spoon some onto each.',
+    'Lids on. Four pots. Eat them within four days — this is the one that will not wait a week.'
+  ],
+  note: 'Tinned fruit in juice, not syrup. Portioning it the day you buy it is what stops the tub going to waste, which is the reason you stopped buying it before.'
+},
+{
+  id: 'p-snack-turkey-rollups', name: 'Turkey and Cheese Roll-Ups', meal: ['snack'], maxPortion: 1.5,
+  effort: 'zero', minutes: 10, servings: 5, batch: true, kcal: 150, protein: 17, carbs: 2, fat: 8, fiber: 0,
+  tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
+  prep: {
+    kind: 'portion', makes: 5, activeMin: 10, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: false,
+    containers: 'One tub, layered, or 5 small bags.',
+    reheat: 'None.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Sliced turkey breast', q: 10, u: 'slices', a: 'protein' },
+    { n: 'Sliced cheese', q: 5, u: 'slices', a: 'dairy' }
+  ],
+  steps: [
+    'A slice of cheese on two slices of turkey, roll it up tight.',
+    'Five roll-ups. Into a tub.',
+    'Savoury, salty, and it is protein rather than crisps.'
+  ],
+  note: 'Made for the night you want something salty. Two of these is 300 calories; the bag of crisps you would otherwise have is 550 and leaves you hungrier.'
+},
+
+/* ── lunches you make once and eat all week ── */
+{
+  id: 'p-lunch-chicken-rice-boxes', name: 'Chicken and Rice Boxes', meal: ['lunch'],
+  effort: 'quick', minutes: 20, servings: 4, batch: true, kcal: 470, protein: 40, carbs: 45, fat: 14, fiber: 5,
+  tags: ['batch', 'meal-prep', 'high-protein', 'portable'],
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 15, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: true,
+    containers: '4 lidded boxes.',
+    reheat: '2 minutes in the microwave, or eat it cold — it is good cold.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Rotisserie chicken', q: 1, u: 'whole', a: 'protein' },
+    { n: 'Rice', q: 1.5, u: 'cups', a: 'pantry' },
+    { n: 'Bell peppers, chopped', q: 2, u: 'whole', a: 'produce' },
+    { n: 'Cucumber, chopped', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Olive oil', q: 3, u: 'tbsp', a: 'pantry' },
+    { n: 'Lemon', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
+  ],
+  steps: [
+    'Cook the rice. That is the only cooking in this.',
+    'While it cooks, pull all the meat off the rotisserie chicken. Hands are quicker than a knife.',
+    'Chop the peppers and cucumber.',
+    'Four boxes. Rice in the bottom, chicken on top, vegetables alongside.',
+    'Olive oil and a squeeze of lemon over each, then the lids on.'
+  ],
+  note: 'The easiest real meal prep there is. One shop-bought chicken, one pot of rice, and Monday to Thursday lunch is finished.'
+},
+{
+  id: 'p-lunch-tuna-bean-boxes', name: 'Tuna and White Bean Boxes', meal: ['lunch'],
+  effort: 'zero', minutes: 12, servings: 4, batch: true, kcal: 425, protein: 35, carbs: 36, fat: 15, fiber: 9,
+  tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'portable'],
+  prep: {
+    kind: 'portion', makes: 4, activeMin: 12, keepsDays: 4,
+    keeps: '4 days in the fridge, and it gets better on day two.',
+    freezes: false,
+    containers: '4 lidded boxes.',
+    reheat: 'None. This is meant to be cold.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Tuna in olive oil, tinned', q: 4, u: 'tins', a: 'pantry' },
+    { n: 'White beans, tinned', q: 2, u: 'tins', a: 'pantry' },
+    { n: 'Cucumber, chopped', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Red onion, thinly sliced', q: 0.5, u: 'whole', a: 'produce' },
+    { n: 'Olive oil', q: 3, u: 'tbsp', a: 'pantry' },
+    { n: 'Lemon', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
+  ],
+  steps: [
+    'Drain and rinse the beans. Drain the tuna.',
+    'Everything into one big bowl, olive oil and lemon over it, mix gently so the beans stay whole.',
+    'Divide between four boxes. Lids on.',
+    'No cooking at all. Twelve minutes and four lunches are done.'
+  ],
+  note: 'The one to start with if the idea of meal prep puts you off. Nothing gets heated, nothing can go wrong.'
+},
+{
+  id: 'p-lunch-egg-salad-tubs', name: 'Egg Salad Tubs', meal: ['lunch'],
+  effort: 'quick', minutes: 20, servings: 4, batch: true, kcal: 430, protein: 27, carbs: 30, fat: 23, fiber: 4,
+  tags: ['batch', 'meal-prep', 'high-protein'],
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 12, keepsDays: 3,
+    keeps: '3 days in the fridge. Eggs are the shortest-lived thing here.',
+    freezes: false,
+    containers: '4 lidded tubs, plus bread kept separate.',
+    reheat: 'None. Put it on the bread on the day, not in advance, or the bread goes soft.',
+    firstTimer: false
+  },
+  ingredients: [
+    { n: 'Eggs', q: 10, u: 'large', a: 'protein' },
+    { n: 'Greek yogurt, 2%', q: 0.5, u: 'cup', a: 'dairy' },
+    { n: 'Mayonnaise', q: 2, u: 'tbsp', a: 'pantry' },
+    { n: 'Celery, finely chopped', q: 3, u: 'stalks', a: 'produce' },
+    { n: 'Whole-grain bread', q: 8, u: 'slices', a: 'bakery' },
+    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
+  ],
+  steps: [
+    'Boil the eggs: cover with cold water, bring to the boil, off the heat, lid on, 11 minutes. Then cold water.',
+    'Peel and chop them roughly.',
+    'Mix with the yogurt, mayonnaise and celery. Salt and pepper.',
+    'Four tubs. Keep the bread out of it until the day you eat it.'
+  ],
+  note: 'Yogurt does most of the work that mayonnaise usually does, for a fraction of the calories. You will not miss it.'
+},
+{
+  id: 'p-lunch-chicken-pasta-salad', name: 'Chicken and Pasta Salad', meal: ['lunch'],
+  effort: 'standard', minutes: 25, servings: 4, batch: true, kcal: 480, protein: 38, carbs: 48, fat: 15, fiber: 6,
+  tags: ['batch', 'meal-prep', 'high-protein', 'portable'],
+  prep: {
+    kind: 'cook', makes: 4, activeMin: 15, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: false,
+    containers: '4 lidded boxes.',
+    reheat: 'None, eat it cold. It is a salad.',
+    firstTimer: false
+  },
+  ingredients: [
+    { n: 'Whole-grain pasta', q: 8, u: 'oz', a: 'pantry' },
+    { n: 'Rotisserie chicken', q: 1, u: 'whole', a: 'protein' },
+    { n: 'Bell peppers, chopped', q: 2, u: 'whole', a: 'produce' },
+    { n: 'Cucumber, chopped', q: 1, u: 'whole', a: 'produce' },
+    { n: 'Olive oil', q: 4, u: 'tbsp', a: 'pantry' },
+    { n: 'Red wine vinegar', q: 2, u: 'tbsp', a: 'pantry' },
+    { n: 'Salt and pepper', q: null, u: 'to taste', a: 'pantry' }
+  ],
+  steps: [
+    'Cook the pasta, then run it under cold water to stop it and cool it down.',
+    'Pull the meat off the rotisserie chicken while the pasta cooks.',
+    'Everything in one bowl with the oil and vinegar. Mix.',
+    'Four boxes, lids on.'
+  ],
+  note: 'Cold pasta salad holds up better across four days than anything you would eat hot.'
+},
+
+/* ── breakfasts made in one go ── */
+{
+  id: 'p-breakfast-oat-jars', name: 'Four Jars of Overnight Oats', meal: ['breakfast'],
+  effort: 'zero', minutes: 10, servings: 4, batch: true, kcal: 345, protein: 16, carbs: 52, fat: 9, fiber: 7,
+  tags: ['no-cook', 'batch', 'meal-prep', 'portable'],
+  prep: {
+    kind: 'portion', makes: 4, activeMin: 10, keepsDays: 4,
+    keeps: '4 days in the fridge.',
+    freezes: false,
+    containers: '4 jars or pots with lids.',
+    reheat: 'None. Eat them cold, straight out of the jar.',
+    firstTimer: true
+  },
+  ingredients: [
+    { n: 'Rolled oats', q: 2, u: 'cups', a: 'pantry' },
+    { n: 'Milk', q: 2, u: 'cups', a: 'dairy' },
+    { n: 'Plain Greek yogurt, 2%', q: 1, u: 'cup', a: 'dairy' },
+    { n: 'Berries, fresh or frozen', q: 2, u: 'cups', a: 'produce' },
+    { n: 'Honey', q: 4, u: 'tsp', a: 'pantry' }
+  ],
+  steps: [
+    'Half a cup of oats into each jar.',
+    'Half a cup of milk and a quarter cup of yogurt on top of each. Stir.',
+    'Berries and a teaspoon of honey on each.',
+    'Lids on, into the fridge. They are ready by morning and good for four days.'
+  ],
+  note: 'Ten minutes on a Sunday and breakfast is not a decision you have to make at 6am for the rest of the week.'
 }
 ];
 

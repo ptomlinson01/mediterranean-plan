@@ -8,12 +8,16 @@ import {
   DAY_NAMES, DAY_FULL
 } from './store.js';
 import { targets, dayType, bmr, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
-import { RECIPES, BY_ID, EFFORT_LABEL } from './recipes.js';
+import { RECIPES, BY_ID, EFFORT_LABEL, AISLES } from './recipes.js';
 import { buildWeek, swapSlot, retuneDay, groceryList, fmtQty, dayTotals, SLOTS } from './planner.js';
 import { askCoach, testKey, contextPack, buildContextFile, QUICK_PROMPTS, ApiError } from './ai.js';
 import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
 import { countedForDay, weekPosition, safetyFloor, MACRO_KEYS } from './intake.js';
+import {
+  PREP_SLOTS, SLOT_BY_KEY, prepOptions, sessionLoad, verdict,
+  prepShopping, prepRunOrder
+} from './prep.js';
 
 /* ── tiny helpers ──────────────────────────────────────────────── */
 
@@ -480,6 +484,271 @@ function bumpHours(delta) {
   const next = Math.max(0, Math.min(24, hoursFor(key) + delta));
   setDay(key, { hoursWorked: next });
   renderToday();
+}
+
+/* ═══════════════════════════ PREP ═════════════════════════════ */
+
+/* Four screens: which meal, how many, what to make, how to make it.
+
+   The third screen is the one that matters. It shows what the picks
+   actually cost — time, separate cooks, portions — and argues back when
+   that adds up to a Sunday nobody would repeat. Meal prep does not fail
+   because people do too little on the first attempt. */
+
+let prepStep = 0;          // 0 which meal · 1 how many · 2 pick · 3 the plan
+let prepSlot = null;
+let prepWanted = 0;
+let prepPicks = [];        // recipe ids
+
+function hasPreppedBefore() {
+  return (getState().prepStock || []).length > 0 || !!getState().prepEverDone;
+}
+
+function renderPrep() {
+  header('Meal prep', ['What do you want to prep?', 'How many?', 'Pick what to make', 'Your prep session'][prepStep]);
+  [renderPrepSlot, renderPrepCount, renderPrepPick, renderPrepPlan][prepStep]();
+}
+
+function prepBack() {
+  prepStep = Math.max(0, prepStep - 1);
+  if (prepStep < 2) prepPicks = [];
+  renderPrep();
+}
+
+function backBar(label = 'Back') {
+  return `<div class="center" style="margin-top:14px"><button class="tiny ghost" id="prepBack">← ${label}</button></div>`;
+}
+function wireBack() {
+  const b = $('#prepBack');
+  if (b) b.onclick = prepBack;
+}
+
+/* ── 1. which meal ── */
+function renderPrepSlot() {
+  const stock = getState().prepStock || [];
+  const first = !hasPreppedBefore();
+  const p = getState().profile;
+  const who = p.whoCooks || {};
+
+  $('#prepHost').innerHTML = `
+    ${stock.length ? `
+      <div class="card">
+        <div class="card-title"><h3>In your fridge now</h3>
+          <button class="tiny" id="prepClear">Clear</button></div>
+        ${stock.map(s => {
+          const r = BY_ID[s.recipeId];
+          const days = Math.max(0, s.keepsDays - Math.floor((Date.now() - new Date(s.madeOn)) / 86400000));
+          return `<div class="spread stockrow${days <= 0 ? ' gone' : ''}">
+            <div><strong>${esc(r ? r.name : s.recipeId)}</strong>
+              <div class="small muted">${s.left} left · ${days > 0 ? `good for ${days} more day${days > 1 ? 's' : ''}` : 'past its best — bin it'}</div></div>
+            <button class="tiny" data-ate="${esc(s.id)}">Ate one</button>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+
+    ${first ? `
+      <div class="card">
+        <h2>You have not done this before</h2>
+        <p>That is fine, and it is simpler than it sounds. Meal prep is just cooking one thing on a quiet day and putting it in boxes.</p>
+        <p class="small muted" style="margin-bottom:0">Start with lunch. One recipe, four boxes, and Monday to Thursday stops being a decision.</p>
+      </div>` : ''}
+
+    <div class="card">
+      <div class="card-title"><h3>What do you want to prep?</h3></div>
+      ${PREP_SLOTS.map(s => {
+        const handled = (who[s.key] || 'me') !== 'me';
+        return `<button class="prep-slot" data-slot="${s.key}">
+          <span class="ps-ico">${s.icon}</span>
+          <span class="ps-body">
+            <strong>${s.label}</strong>
+            <span class="small muted">${esc(s.blurb)}</span>
+            ${handled ? '<span class="small muted">You have this set to someone else cooking — prepping it is still fine.</span>' : ''}
+          </span>
+          <span class="ps-go">›</span>
+        </button>`;
+      }).join('')}
+    </div>
+
+    <div class="note">Not sure? Snacks take about ten minutes and no cooking, and they are the thing that stops the 9pm raid on the kitchen.</div>`;
+
+  $('#prepHost').querySelectorAll('[data-slot]').forEach(b => {
+    b.onclick = () => { prepSlot = b.dataset.slot; prepPicks = []; prepStep = 1; renderPrep(); };
+  });
+  $('#prepHost').querySelectorAll('[data-ate]').forEach(b => {
+    b.onclick = () => { eatFromStock(b.dataset.ate); };
+  });
+  const c = $('#prepClear');
+  if (c) c.onclick = () => {
+    if (!confirm('Clear everything from the fridge list?')) return;
+    update(s => { s.prepStock = []; });
+    renderPrep();
+  };
+}
+
+/* ── 2. how many ── */
+function renderPrepCount() {
+  const s = SLOT_BY_KEY[prepSlot];
+  $('#prepHost').innerHTML = `
+    <div class="card">
+      <div class="card-title"><h3>${s.icon} ${s.label}</h3></div>
+      <p>${esc(s.ask)}</p>
+      <div class="grid3">
+        ${s.counts.map(n => `<button class="bigpick" data-n="${n}">${n}</button>`).join('')}
+      </div>
+      <div class="hint">You can change your mind on the next screen. This just tells me how much food to aim at, so I can stop you making eight lunches for a four-lunch week.</div>
+    </div>
+    ${backBar('Pick a different meal')}`;
+
+  $('#prepHost').querySelectorAll('[data-n]').forEach(b => {
+    b.onclick = () => { prepWanted = Number(b.dataset.n); prepStep = 2; renderPrep(); };
+  });
+  wireBack();
+}
+
+/* ── 3. pick what to make ── */
+function renderPrepPick() {
+  const first = !hasPreppedBefore();
+  const opts = prepOptions(prepSlot, getState().profile, first);
+  const picks = prepPicks.map(id => BY_ID[id]).filter(Boolean);
+  const v = verdict(picks, prepWanted, prepSlot, first);
+  const load = sessionLoad(picks);
+  const s = SLOT_BY_KEY[prepSlot];
+
+  $('#prepHost').innerHTML = `
+    <div class="card">
+      <div class="card-title"><h3>${s.icon} ${prepWanted} ${prepSlot === 'snack' ? 'nights' : prepSlot === 'breakfast' ? 'mornings' : 'days'}</h3>
+        <button class="tiny" id="prepChangeN">Change</button></div>
+      <p class="small muted" style="margin-bottom:0">Tap what you fancy making. I will tell you if it is too much.</p>
+    </div>
+
+    <div class="card flush">
+      ${opts.map(r => {
+        const on = prepPicks.includes(r.id);
+        return `<div class="prep-opt${on ? ' on' : ''}" data-pick="${r.id}">
+          <span class="po-tick">✓</span>
+          <div class="po-body">
+            <strong>${esc(r.name)}</strong>
+            <div class="po-meta">
+              <span class="badge ${r.prep.kind === 'portion' ? 'zero' : 'quick'}">${r.prep.kind === 'portion' ? 'No cooking' : 'Cook'}</span>
+              <span>${r.prep.activeMin} min</span>
+              <span>makes ${r.prep.makes}</span>
+              <span>${r.kcal} kcal · ${r.protein}g protein</span>
+            </div>
+            <div class="small muted" style="margin-top:4px">${esc(r.prep.keeps)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="card ${v.level}">
+      <strong>${esc(v.headline)}</strong>
+      <p class="small" style="margin:6px 0 0">${esc(v.body)}</p>
+      ${picks.length ? `<div class="macro-row" style="margin-top:12px">
+        <div class="macro"><b>${load.items}</b>thing${load.items > 1 ? 's' : ''}</div>
+        <div class="macro"><b>${load.cooks}</b>to cook</div>
+        <div class="macro"><b>${load.activeMin}m</b>hands on</div>
+        <div class="macro"><b>${load.portions}</b>portions</div>
+      </div>` : ''}
+    </div>
+
+    <button class="primary" id="prepGo" style="width:100%" ${picks.length ? '' : 'disabled'}>
+      ${v.level === 'toomuch' ? 'Show me how anyway' : 'Show me how'}
+    </button>
+    ${backBar('Back')}`;
+
+  $('#prepHost').querySelectorAll('[data-pick]').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.pick;
+      prepPicks = prepPicks.includes(id) ? prepPicks.filter(x => x !== id) : [...prepPicks, id];
+      renderPrep();
+    };
+  });
+  $('#prepChangeN').onclick = () => { prepStep = 1; renderPrep(); };
+  $('#prepGo').onclick = () => { prepStep = 3; renderPrep(); };
+  wireBack();
+}
+
+/* ── 4. the plan ── */
+function renderPrepPlan() {
+  const picks = prepPicks.map(id => BY_ID[id]).filter(Boolean);
+  const load = sessionLoad(picks);
+  const shopping = prepShopping(picks);
+  const order = prepRunOrder(picks);
+
+  $('#prepHost').innerHTML = `
+    <div class="card hero">
+      <div class="big">${load.activeMin}<span class="unit"> minutes</span></div>
+      <div class="small" style="opacity:.85;margin-top:4px">
+        ${load.cooks ? `${load.cooks} to cook` : 'nothing to cook'}${load.portionJobs ? ` · ${load.portionJobs} to portion` : ''} · ${load.portions} portions
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h3>Buy this</h3>
+        <button class="tiny" id="prepCopyShop">Copy</button></div>
+      ${AISLES.filter(a => shopping[a]).map(a => `
+        <div class="aisle-head">${a}</div>
+        ${shopping[a].map(i => `<div class="grocery-item"><span>${esc(fmtQty(i))}</span></div>`).join('')}
+      `).join('')}
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h3>Do it in this order</h3></div>
+      <ol class="steps">
+        ${order.map(st => `<li><strong>${esc(st.title)}</strong><div class="small muted">${esc(st.detail)}</div></li>`).join('')}
+      </ol>
+    </div>
+
+    ${picks.map(r => `
+      <div class="card">
+        <div class="card-title"><h3>${esc(r.name)}</h3>
+          <span class="badge ${r.prep.kind === 'portion' ? 'zero' : 'quick'}">${r.prep.makes} portions</span></div>
+        <ol class="steps">${r.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+        <div class="divider"></div>
+        <div class="small stack">
+          <div class="spread"><span class="muted">Put it in</span><strong style="text-align:right">${esc(r.prep.containers)}</strong></div>
+          <div class="spread"><span class="muted">Keeps</span><strong style="text-align:right">${esc(r.prep.keeps)}</strong></div>
+          <div class="spread"><span class="muted">Freezes</span><strong>${r.prep.freezes ? 'Yes' : 'No'}</strong></div>
+          <div class="spread"><span class="muted">To eat it</span><strong style="text-align:right">${esc(r.prep.reheat)}</strong></div>
+        </div>
+      </div>`).join('')}
+
+    <button class="primary" id="prepDone" style="width:100%">I made it — put it in my fridge list</button>
+    ${backBar('Change what I am making')}
+    <p class="small muted center" style="margin:14px 0 20px">Once you tick this off, the app knows what is in your fridge and how long it has left.</p>`;
+
+  $('#prepCopyShop').onclick = () => {
+    const lines = AISLES.filter(a => shopping[a])
+      .map(a => `${a.toUpperCase()}\n` + shopping[a].map(i => `  ${fmtQty(i)}`).join('\n'))
+      .join('\n\n');
+    copy(lines, 'Shopping list copied.');
+  };
+  $('#prepDone').onclick = () => {
+    update(st => {
+      st.prepEverDone = true;
+      for (const r of picks) {
+        st.prepStock.push({
+          id: newEntryId(), recipeId: r.id, madeOn: new Date().toISOString(),
+          left: r.prep.makes, keepsDays: r.prep.keepsDays, slot: prepSlot
+        });
+      }
+    });
+    prepStep = 0; prepPicks = [];
+    renderPrep();
+    toast('In the fridge. Nicely done.');
+  };
+  wireBack();
+}
+
+function eatFromStock(id) {
+  update(s => {
+    const item = (s.prepStock || []).find(x => x.id === id);
+    if (!item) return;
+    item.left -= 1;
+    if (item.left <= 0) s.prepStock = s.prepStock.filter(x => x.id !== id);
+  });
+  renderPrep();
+  toast('Logged.');
 }
 
 /* ═══════════════════════ THE NUMBER ═══════════════════════════ */
@@ -1389,6 +1658,21 @@ function renderMe() {
   </div>
 
   <div class="card">
+    <div class="card-title"><h3>Who cooks what</h3></div>
+    <p class="small muted">If someone else makes dinner, the app should not be planning one. Set it here and those meals stop cluttering your week.</p>
+    ${SLOTS.map(sl => `
+      <div class="spread" style="margin-bottom:10px">
+        <label style="margin:0;flex:1">${SLOT_LABEL[sl]}</label>
+        <select data-who="${sl}" style="width:150px">
+          <option value="me" ${(p.whoCooks?.[sl] || 'me') === 'me' ? 'selected' : ''}>I handle it</option>
+          <option value="other" ${p.whoCooks?.[sl] === 'other' ? 'selected' : ''}>Someone else</option>
+          <option value="skip" ${p.whoCooks?.[sl] === 'skip' ? 'selected' : ''}>I skip it</option>
+        </select>
+      </div>`).join('')}
+    <button class="primary" id="saveWho" style="width:100%;margin-top:6px">Save & rebuild week</button>
+  </div>
+
+  <div class="card">
     <div class="card-title"><h3>Typical work week</h3></div>
     <p class="small muted">Change these and rebuild the week — the whole plan reshapes around them.</p>
     ${DAY_FULL.map((d, i) => `
@@ -1452,6 +1736,20 @@ function renderMe() {
     });
     toast('Profile saved.');
     renderMe();
+  };
+
+  $('#saveWho').onclick = () => {
+    update(st => {
+      st.profile.whoCooks = st.profile.whoCooks || {};
+      document.querySelectorAll('[data-who]').forEach(sel => {
+        st.profile.whoCooks[sel.dataset.who] = sel.value;
+      });
+      const t2 = targets(st.profile);
+      st.plan = buildWeek(st.profile, t2.kcal, Date.now() & 0xffff, t2.protein);
+      st.grocery = { checked: [], generatedFor: st.plan.weekStart };
+    });
+    toast('Week rebuilt around who cooks.');
+    show('plan');
   };
 
   $('#saveHours').onclick = () => {
@@ -1548,7 +1846,7 @@ async function copy(text, msg) {
 /* ── boot ──────────────────────────────────────────────────────── */
 
 const RENDER = {
-  today: renderToday, plan: renderPlan, recipes: renderRecipes,
+  today: renderToday, plan: renderPlan, prep: renderPrep, recipes: renderRecipes,
   coach: renderCoach, me: renderMe, onboard: renderOnboard
 };
 
