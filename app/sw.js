@@ -2,7 +2,7 @@
    the app opens instantly and works with no signal. API calls are never
    cached — they always go to the network. */
 
-const CACHE = 'medplan-v6';
+const CACHE = 'medplan-v7';
 const SHELL = [
   './',
   './index.html',
@@ -18,6 +18,7 @@ const SHELL = [
   './js/photos.js',
   './js/intake.js',
   './js/prep.js',
+  './js/move.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'

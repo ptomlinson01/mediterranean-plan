@@ -24,6 +24,7 @@ export const RECIPES = [
 {
   id: 'b-yogurt-berries', name: 'Greek Yogurt with Berries and Honey', meal: ['breakfast'],
   effort: 'zero', minutes: 4, servings: 1, kcal: 330, protein: 26, carbs: 34, fat: 10, fiber: 5,
+  equip: [],
   tags: ['no-cook', 'high-protein', 'portable'],
   ingredients: [
     { n: 'Plain Greek yogurt, 2%', q: 1, u: 'cup', a: 'dairy' },
@@ -40,6 +41,7 @@ export const RECIPES = [
 {
   id: 'b-scrambled-eggs', name: 'Scrambled Eggs with Tomato and Spinach', meal: ['breakfast'],
   effort: 'quick', minutes: 10, servings: 1, kcal: 360, protein: 28, carbs: 22, fat: 18, fiber: 4,
+  equip: ['stovetop'],
   tags: ['high-protein'],
   ingredients: [
     { n: 'Eggs', q: 3, u: 'large', a: 'protein' },
@@ -59,6 +61,7 @@ export const RECIPES = [
 {
   id: 'b-boiled-eggs-toast', name: 'Hard-Boiled Eggs with Toast and Peppers', meal: ['breakfast'],
   effort: 'zero', minutes: 5, servings: 1, kcal: 400, protein: 22, carbs: 36, fat: 19, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'prep-ahead', 'high-protein'],
   ingredients: [
     { n: 'Eggs, boiled ahead of time', q: 2, u: 'large', a: 'protein' },
@@ -76,6 +79,7 @@ export const RECIPES = [
 {
   id: 'b-overnight-oats', name: 'Overnight Oats with Berries', meal: ['breakfast'],
   effort: 'zero', minutes: 5, servings: 1, kcal: 345, protein: 16, carbs: 55, fat: 7, fiber: 8,
+  equip: [],
   tags: ['no-cook', 'prep-ahead', 'portable'],
   ingredients: [
     { n: 'Rolled oats', q: 0.5, u: 'cup', a: 'pantry' },
@@ -94,6 +98,7 @@ export const RECIPES = [
 {
   id: 'b-avocado-egg-toast', name: 'Avocado and Egg Toast', meal: ['breakfast'],
   effort: 'quick', minutes: 8, servings: 1, kcal: 420, protein: 22, carbs: 36, fat: 22, fiber: 9,
+  equip: ['stovetop'],
   tags: ['high-protein'],
   ingredients: [
     { n: 'Eggs', q: 2, u: 'large', a: 'protein' },
@@ -119,6 +124,7 @@ export const RECIPES = [
     reheat: '30 seconds in the microwave, or eat them cold in the car.',
     firstTimer: false
   },
+  equip: ['oven'],
   tags: ['batch', 'portable', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Eggs', q: 10, u: 'large', a: 'protein' },
@@ -141,6 +147,7 @@ export const RECIPES = [
 {
   id: 'l-big-chicken-salad', name: 'Big Chicken Salad', meal: ['lunch'],
   effort: 'quick', minutes: 12, servings: 1, kcal: 450, protein: 42, carbs: 18, fat: 24, fiber: 6,
+  equip: [],
   tags: ['high-protein', 'no-cook', 'portable'],
   ingredients: [
     { n: 'Cooked chicken breast, sliced', q: 5, u: 'oz', a: 'protein' },
@@ -162,6 +169,7 @@ export const RECIPES = [
 {
   id: 'l-tuna-plate', name: 'Tuna Salad Plate', meal: ['lunch'],
   effort: 'zero', minutes: 6, servings: 1, kcal: 420, protein: 36, carbs: 28, fat: 18, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'pantry-only', 'high-protein', 'portable'],
   ingredients: [
     { n: 'Canned tuna, drained', q: 1, u: 'can (5oz)', a: 'pantry' },
@@ -181,6 +189,7 @@ export const RECIPES = [
 {
   id: 'l-chicken-wrap', name: 'Chicken and Salad Wrap', meal: ['lunch'],
   effort: 'quick', minutes: 10, servings: 1, kcal: 470, protein: 37, carbs: 42, fat: 17, fiber: 9,
+  equip: [],
   tags: ['high-protein', 'portable'],
   ingredients: [
     { n: 'Whole-wheat tortilla, large', q: 1, u: 'whole', a: 'bakery' },
@@ -199,6 +208,7 @@ export const RECIPES = [
 {
   id: 'l-tuna-sandwich', name: 'Tuna Salad Sandwich', meal: ['lunch'],
   effort: 'zero', minutes: 7, servings: 1, kcal: 440, protein: 34, carbs: 40, fat: 16, fiber: 7,
+  equip: [],
   tags: ['no-cook', 'pantry-only', 'high-protein', 'portable'],
   ingredients: [
     { n: 'Canned tuna, drained', q: 1, u: 'can (5oz)', a: 'pantry' },
@@ -216,6 +226,7 @@ export const RECIPES = [
 {
   id: 'l-chopped-chicken', name: 'Chopped Salad with Rotisserie Chicken', meal: ['lunch'],
   effort: 'quick', minutes: 10, servings: 1, kcal: 445, protein: 39, carbs: 26, fat: 22, fiber: 9,
+  equip: [],
   tags: ['high-protein', 'no-cook'],
   ingredients: [
     { n: 'Rotisserie chicken, pulled', q: 5, u: 'oz', a: 'protein' },
@@ -235,6 +246,7 @@ export const RECIPES = [
 {
   id: 'l-chicken-rice-bowl', name: 'Chicken and Rice Bowl', meal: ['lunch', 'dinner'],
   effort: 'zero', minutes: 5, servings: 1, kcal: 450, protein: 35, carbs: 48, fat: 12, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'leftovers', 'high-protein'],
   ingredients: [
     { n: 'Cooked chicken, chopped', q: 4, u: 'oz', a: 'protein' },
@@ -253,6 +265,7 @@ export const RECIPES = [
 {
   id: 'l-cucumber-pepper-chicken', name: 'Cucumber, Pepper and Chicken Salad', meal: ['lunch'],
   effort: 'quick', minutes: 12, servings: 1, kcal: 460, protein: 38, carbs: 22, fat: 26, fiber: 7,
+  equip: [],
   tags: ['high-protein', 'no-cook', 'low-carb'],
   ingredients: [
     { n: 'Cooked chicken breast, sliced', q: 5, u: 'oz', a: 'protein' },
@@ -281,6 +294,7 @@ export const RECIPES = [
     reheat: '3 minutes in the microwave, or 6 in a pan.',
     firstTimer: false
   },
+  equip: ['stovetop'],
   tags: ['batch', 'meal-prep', 'high-protein', 'freezes'],
   ingredients: [
     { n: 'Chicken breast or thighs', q: 1.5, u: 'lb', a: 'protein' },
@@ -307,6 +321,7 @@ export const RECIPES = [
 {
   id: 'l-egg-salad-sandwich', name: 'Egg Salad Sandwich', meal: ['lunch'],
   effort: 'zero', minutes: 8, servings: 1, kcal: 430, protein: 26, carbs: 38, fat: 20, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'prep-ahead', 'portable'],
   ingredients: [
     { n: 'Eggs, boiled ahead of time', q: 3, u: 'large', a: 'protein' },
@@ -325,6 +340,7 @@ export const RECIPES = [
 {
   id: 'l-tuna-bean-salad', name: 'Tuna and White Bean Salad', meal: ['lunch'],
   effort: 'zero', minutes: 6, servings: 1, kcal: 425, protein: 34, carbs: 34, fat: 16, fiber: 11,
+  equip: [],
   tags: ['no-cook', 'pantry-only', 'high-protein', 'high-fiber'],
   ingredients: [
     { n: 'Canned tuna, drained', q: 1, u: 'can (5oz)', a: 'pantry' },
@@ -354,6 +370,7 @@ export const RECIPES = [
     reheat: '3 minutes in the microwave.',
     firstTimer: false
   },
+  equip: ['oven', 'stovetop'],
   tags: ['batch', 'one-pan', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Chicken thighs, boneless skinless', q: 2, u: 'lb', a: 'protein' },
@@ -385,6 +402,7 @@ export const RECIPES = [
     reheat: '3 minutes in the microwave. The vegetables soften; that is normal.',
     firstTimer: false
   },
+  equip: ['oven'],
   tags: ['batch', 'one-pan', 'high-protein', 'meal-prep'],
   ingredients: [
     { n: 'Chicken thighs, bone-in', q: 8, u: 'whole', a: 'protein' },
@@ -406,6 +424,7 @@ export const RECIPES = [
 {
   id: 'd-grilled-chicken-salad', name: 'Grilled Chicken with a Big Salad', meal: ['dinner'],
   effort: 'standard', minutes: 25, servings: 2, kcal: 460, protein: 44, carbs: 18, fat: 24, fiber: 6,
+  equip: ['stovetop', 'grill'],
   tags: ['high-protein', 'low-carb'],
   ingredients: [
     { n: 'Chicken breasts', q: 1, u: 'lb', a: 'protein' },
@@ -427,6 +446,7 @@ export const RECIPES = [
 {
   id: 'd-lemon-chicken-rice', name: 'Lemon Chicken with Green Beans and Rice', meal: ['dinner'],
   effort: 'standard', minutes: 30, servings: 2, kcal: 520, protein: 45, carbs: 42, fat: 18, fiber: 6,
+  equip: ['stovetop'],
   tags: ['high-protein'],
   ingredients: [
     { n: 'Chicken breasts or thighs', q: 1, u: 'lb', a: 'protein' },
@@ -447,6 +467,7 @@ export const RECIPES = [
 {
   id: 'd-baked-salmon', name: 'Baked Salmon with Asparagus and Potatoes', meal: ['dinner'],
   effort: 'standard', minutes: 30, servings: 2, kcal: 520, protein: 41, carbs: 32, fat: 25, fiber: 6,
+  equip: ['oven'],
   tags: ['one-pan', 'high-protein', 'omega-3'],
   ingredients: [
     { n: 'Salmon fillets', q: 2, u: 'x 5oz', a: 'protein' },
@@ -466,6 +487,7 @@ export const RECIPES = [
 {
   id: 'd-baked-cod-tomatoes', name: 'Baked Cod with Tomatoes', meal: ['dinner'],
   effort: 'quick', minutes: 22, servings: 2, kcal: 400, protein: 39, carbs: 20, fat: 18, fiber: 5,
+  equip: ['oven', 'stovetop'],
   tags: ['quick', 'high-protein', 'one-pan', 'low-carb'],
   ingredients: [
     { n: 'Cod fillets', q: 2, u: 'x 6oz', a: 'protein' },
@@ -486,6 +508,7 @@ export const RECIPES = [
 {
   id: 'd-skillet-chicken-zucchini', name: 'Skillet Chicken with Zucchini and Tomatoes', meal: ['dinner'],
   effort: 'quick', minutes: 20, servings: 2, kcal: 440, protein: 40, carbs: 18, fat: 22, fiber: 5,
+  equip: ['stovetop'],
   tags: ['quick', 'high-protein', 'one-pan', 'low-carb'],
   ingredients: [
     { n: 'Chicken breast, cubed', q: 1, u: 'lb', a: 'protein' },
@@ -506,6 +529,7 @@ export const RECIPES = [
 {
   id: 'd-turkey-patties', name: 'Turkey Patties with Salad', meal: ['dinner'],
   effort: 'standard', minutes: 35, servings: 2, kcal: 460, protein: 38, carbs: 24, fat: 24, fiber: 6,
+  equip: ['stovetop'],
   tags: ['high-protein'],
   ingredients: [
     { n: 'Ground turkey, 93% lean', q: 1, u: 'lb', a: 'protein' },
@@ -528,6 +552,7 @@ export const RECIPES = [
 {
   id: 'd-chicken-broccoli-sweetpotato', name: 'Baked Chicken with Broccoli and Sweet Potato', meal: ['dinner'],
   effort: 'standard', minutes: 40, servings: 2, kcal: 495, protein: 43, carbs: 40, fat: 18, fiber: 8,
+  equip: ['oven'],
   tags: ['one-pan', 'high-protein'],
   ingredients: [
     { n: 'Chicken breasts or thighs', q: 1, u: 'lb', a: 'protein' },
@@ -546,6 +571,7 @@ export const RECIPES = [
 {
   id: 'd-shrimp-zucchini', name: 'Garlic Shrimp with Zucchini', meal: ['dinner'],
   effort: 'quick', minutes: 18, servings: 2, kcal: 420, protein: 37, carbs: 24, fat: 20, fiber: 5,
+  equip: ['stovetop'],
   tags: ['quick', 'high-protein'],
   ingredients: [
     { n: 'Shrimp, peeled', q: 1, u: 'lb', a: 'frozen' },
@@ -567,6 +593,7 @@ export const RECIPES = [
 {
   id: 'd-chicken-salad-bowl', name: 'Chicken Salad Bowl with Yogurt Dressing', meal: ['dinner'],
   effort: 'quick', minutes: 15, servings: 1, kcal: 450, protein: 42, carbs: 16, fat: 24, fiber: 5,
+  equip: [],
   tags: ['quick', 'high-protein', 'low-carb'],
   ingredients: [
     { n: 'Cooked chicken breast, sliced', q: 5, u: 'oz', a: 'protein' },
@@ -587,6 +614,7 @@ export const RECIPES = [
 {
   id: 'd-egg-veg-skillet', name: 'Egg and Vegetable Skillet', meal: ['dinner', 'breakfast'],
   effort: 'quick', minutes: 18, servings: 2, kcal: 390, protein: 24, carbs: 22, fat: 23, fiber: 6,
+  equip: ['stovetop'],
   tags: ['quick', 'vegetarian', 'pantry-only'],
   ingredients: [
     { n: 'Eggs', q: 4, u: 'large', a: 'protein' },
@@ -609,6 +637,7 @@ export const RECIPES = [
 {
   id: 'd-chicken-potato-plate', name: 'Chicken, Potato and Green Bean Plate', meal: ['dinner'],
   effort: 'zero', minutes: 8, servings: 1, kcal: 460, protein: 40, carbs: 36, fat: 16, fiber: 7,
+  equip: ['microwave'],
   tags: ['no-cook', 'exhausted', 'high-protein', 'leftovers'],
   ingredients: [
     { n: 'Rotisserie chicken, skin removed', q: 5, u: 'oz', a: 'protein' },
@@ -627,6 +656,7 @@ export const RECIPES = [
 {
   id: 'd-rescue-chicken', name: 'Rotisserie Chicken Rescue Dinner', meal: ['dinner'],
   effort: 'zero', minutes: 6, servings: 1, kcal: 470, protein: 43, carbs: 22, fat: 24, fiber: 7,
+  equip: [],
   tags: ['no-cook', 'exhausted', 'high-protein'],
   ingredients: [
     { n: 'Rotisserie chicken, skin removed', q: 6, u: 'oz', a: 'protein' },
@@ -646,6 +676,7 @@ export const RECIPES = [
 {
   id: 'd-tuna-bean-bowl', name: 'Tuna and White Bean Bowl', meal: ['dinner', 'lunch'],
   effort: 'zero', minutes: 5, servings: 1, kcal: 425, protein: 35, carbs: 34, fat: 16, fiber: 10,
+  equip: [],
   tags: ['no-cook', 'exhausted', 'pantry-only', 'high-protein'],
   ingredients: [
     { n: 'Canned tuna, drained', q: 1, u: 'can (5oz)', a: 'pantry' },
@@ -666,6 +697,7 @@ export const RECIPES = [
 {
   id: 's-cottage-fruit', name: 'Cottage Cheese with Fruit', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 3, servings: 1, kcal: 220, protein: 21, carbs: 20, fat: 6, fiber: 3,
+  equip: [],
   tags: ['no-cook', 'high-protein'],
   ingredients: [
     { n: 'Low-fat cottage cheese', q: 0.75, u: 'cup', a: 'dairy' },
@@ -678,6 +710,7 @@ export const RECIPES = [
 {
   id: 'd-pork-chops', name: 'Pork Chops with Green Beans and Potatoes', meal: ['dinner'],
   effort: 'standard', minutes: 30, servings: 2, kcal: 520, protein: 44, carbs: 34, fat: 22, fiber: 6,
+  equip: ['oven', 'stovetop'],
   tags: ['high-protein'],
   ingredients: [
     { n: 'Pork chops, bone-in', q: 2, u: 'x 6oz', a: 'protein' },
@@ -699,6 +732,7 @@ export const RECIPES = [
 {
   id: 'l-chicken-bean-bowl', name: 'Chicken and Refried Bean Bowl', meal: ['lunch', 'dinner'],
   effort: 'zero', minutes: 6, servings: 1, kcal: 470, protein: 40, carbs: 40, fat: 16, fiber: 9,
+  equip: ['microwave'],
   tags: ['no-cook', 'exhausted', 'high-protein', 'pantry-only'],
   ingredients: [
     { n: 'Rotisserie chicken, pulled', q: 5, u: 'oz', a: 'protein' },
@@ -718,6 +752,7 @@ export const RECIPES = [
 {
   id: 'd-refried-beans-eggs', name: 'Refried Beans with Eggs and Peppers', meal: ['dinner', 'breakfast'],
   effort: 'quick', minutes: 12, servings: 1, kcal: 450, protein: 25, carbs: 42, fat: 20, fiber: 10,
+  equip: ['stovetop', 'microwave'],
   tags: ['quick', 'vegetarian', 'pantry-only', 'high-fiber'],
   ingredients: [
     { n: 'Refried beans', q: 0.75, u: 'cup', a: 'pantry' },
@@ -737,6 +772,7 @@ export const RECIPES = [
 {
   id: 'd-rotisserie-roast-veg', name: 'Rotisserie Chicken with Roasted Vegetables', meal: ['dinner'],
   effort: 'quick', minutes: 18, servings: 2, kcal: 480, protein: 44, carbs: 30, fat: 20, fiber: 8,
+  equip: ['oven'],
   tags: ['quick', 'high-protein', 'one-pan'],
   ingredients: [
     { n: 'Rotisserie chicken, skin removed', q: 10, u: 'oz', a: 'protein' },
@@ -758,6 +794,7 @@ export const RECIPES = [
 {
   id: 's-apple-almonds', name: 'Apple with Almonds', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 2, servings: 1, kcal: 200, protein: 6, carbs: 26, fat: 10, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'portable'],
   ingredients: [
     { n: 'Apple', q: 1, u: 'medium', a: 'produce' },
@@ -768,6 +805,7 @@ export const RECIPES = [
 {
   id: 's-yogurt-cinnamon', name: 'Greek Yogurt with Cinnamon', meal: ['snack'],
   effort: 'zero', minutes: 2, servings: 1, kcal: 155, protein: 18, carbs: 12, fat: 4, fiber: 1,
+  equip: [],
   tags: ['no-cook', 'high-protein'],
   ingredients: [
     { n: 'Plain Greek yogurt, 2%', q: 0.75, u: 'cup', a: 'dairy' },
@@ -780,6 +818,7 @@ export const RECIPES = [
 {
   id: 's-carrots-hummus', name: 'Carrots and Hummus', meal: ['snack'],
   effort: 'zero', minutes: 3, servings: 1, kcal: 180, protein: 6, carbs: 22, fat: 8, fiber: 6,
+  equip: [],
   tags: ['no-cook', 'portable', 'vegetarian'],
   ingredients: [
     { n: 'Baby carrots', q: 1.5, u: 'cups', a: 'produce' },
@@ -790,6 +829,7 @@ export const RECIPES = [
 {
   id: 's-cheese-grapes', name: 'Cheese and Grapes', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 2, servings: 1, kcal: 190, protein: 11, carbs: 18, fat: 9, fiber: 1,
+  equip: [],
   tags: ['no-cook', 'portable'],
   ingredients: [
     { n: 'Cheddar cheese', q: 1, u: 'oz', a: 'dairy' },
@@ -800,6 +840,7 @@ export const RECIPES = [
 {
   id: 's-banana-peanut-butter', name: 'Banana with Peanut Butter', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 2, servings: 1, kcal: 210, protein: 7, carbs: 28, fat: 9, fiber: 4,
+  equip: [],
   tags: ['no-cook', 'portable'],
   ingredients: [
     { n: 'Banana', q: 1, u: 'medium', a: 'produce' },
@@ -810,6 +851,7 @@ export const RECIPES = [
 {
   id: 's-orange-almonds', name: 'Orange and Almonds', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 2, servings: 1, kcal: 175, protein: 5, carbs: 22, fat: 9, fiber: 5,
+  equip: [],
   tags: ['no-cook', 'portable'],
   ingredients: [
     { n: 'Orange', q: 1, u: 'large', a: 'produce' },
@@ -820,6 +862,7 @@ export const RECIPES = [
 {
   id: 's-hard-boiled-egg', name: 'Hard-Boiled Eggs', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 1, servings: 1, kcal: 160, protein: 13, carbs: 2, fat: 11, fiber: 0,
+  equip: [],
   tags: ['no-cook', 'portable', 'high-protein', 'prep-ahead'],
   ingredients: [
     { n: 'Eggs, boiled ahead of time', q: 2, u: 'large', a: 'protein' },
@@ -830,6 +873,7 @@ export const RECIPES = [
 {
   id: 's-chocolate-tea', name: 'Dark Chocolate and Tea', meal: ['snack'], maxPortion: 1,
   effort: 'zero', minutes: 3, servings: 1, kcal: 95, protein: 1, carbs: 9, fat: 7, fiber: 2,
+  equip: [],
   tags: ['no-cook', 'evening', 'craving'],
   ingredients: [
     { n: 'Dark chocolate, 70%', q: 2, u: 'squares', a: 'pantry' },
@@ -865,6 +909,7 @@ export const RECIPES = [
 {
   id: 'p-snack-boiled-eggs', name: 'A Half-Dozen Boiled Eggs', meal: ['snack', 'breakfast'], maxPortion: 1.5,
   effort: 'quick', minutes: 15, servings: 6, batch: true, kcal: 160, protein: 13, carbs: 2, fat: 11, fiber: 0,
+  equip: ['stovetop'],
   tags: ['batch', 'meal-prep', 'high-protein', 'evening'],
   prep: {
     kind: 'cook', makes: 6, activeMin: 5, keepsDays: 7,
@@ -889,6 +934,7 @@ export const RECIPES = [
 {
   id: 'p-snack-nut-bags', name: 'Nuts, Already Portioned', meal: ['snack'], maxPortion: 1,
   effort: 'zero', minutes: 6, servings: 6, batch: true, kcal: 170, protein: 6, carbs: 6, fat: 15, fiber: 3,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'portable', 'evening'],
   prep: {
     kind: 'portion', makes: 6, activeMin: 6, keepsDays: 30,
@@ -912,6 +958,7 @@ export const RECIPES = [
 {
   id: 'p-snack-veg-sticks', name: 'Carrot and Pepper Sticks in Water', meal: ['snack'], maxPortion: 2,
   effort: 'zero', minutes: 12, servings: 5, batch: true, kcal: 80, protein: 2, carbs: 14, fat: 2, fiber: 4,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'evening'],
   prep: {
     kind: 'portion', makes: 5, activeMin: 12, keepsDays: 5,
@@ -937,6 +984,7 @@ export const RECIPES = [
 {
   id: 'p-snack-yogurt-pots', name: 'Yogurt Pots with Cinnamon', meal: ['snack', 'breakfast'], maxPortion: 1,
   effort: 'zero', minutes: 8, servings: 5, batch: true, kcal: 155, protein: 18, carbs: 12, fat: 4, fiber: 1,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
   prep: {
     kind: 'portion', makes: 5, activeMin: 8, keepsDays: 5,
@@ -961,6 +1009,7 @@ export const RECIPES = [
 {
   id: 'p-snack-cottage-fruit', name: 'Cottage Cheese Pots with Fruit', meal: ['snack'], maxPortion: 1,
   effort: 'zero', minutes: 8, servings: 4, batch: true, kcal: 170, protein: 16, carbs: 16, fat: 5, fiber: 2,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
   prep: {
     kind: 'portion', makes: 4, activeMin: 8, keepsDays: 4,
@@ -984,6 +1033,7 @@ export const RECIPES = [
 {
   id: 'p-snack-turkey-rollups', name: 'Turkey and Cheese Roll-Ups', meal: ['snack'], maxPortion: 1.5,
   effort: 'zero', minutes: 10, servings: 5, batch: true, kcal: 150, protein: 17, carbs: 2, fat: 8, fiber: 0,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'evening'],
   prep: {
     kind: 'portion', makes: 5, activeMin: 10, keepsDays: 4,
@@ -1009,6 +1059,7 @@ export const RECIPES = [
 {
   id: 'p-lunch-chicken-rice-boxes', name: 'Chicken and Rice Boxes', meal: ['lunch'],
   effort: 'quick', minutes: 20, servings: 4, batch: true, kcal: 470, protein: 40, carbs: 45, fat: 14, fiber: 5,
+  equip: [],
   tags: ['batch', 'meal-prep', 'high-protein', 'portable'],
   prep: {
     kind: 'cook', makes: 4, activeMin: 15, keepsDays: 4,
@@ -1039,6 +1090,7 @@ export const RECIPES = [
 {
   id: 'p-lunch-tuna-bean-boxes', name: 'Tuna and White Bean Boxes', meal: ['lunch'],
   effort: 'zero', minutes: 12, servings: 4, batch: true, kcal: 425, protein: 35, carbs: 36, fat: 15, fiber: 9,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'high-protein', 'portable'],
   prep: {
     kind: 'portion', makes: 4, activeMin: 12, keepsDays: 4,
@@ -1068,6 +1120,7 @@ export const RECIPES = [
 {
   id: 'p-lunch-egg-salad-tubs', name: 'Egg Salad Tubs', meal: ['lunch'],
   effort: 'quick', minutes: 20, servings: 4, batch: true, kcal: 430, protein: 27, carbs: 30, fat: 23, fiber: 4,
+  equip: ['stovetop'],
   tags: ['batch', 'meal-prep', 'high-protein'],
   prep: {
     kind: 'cook', makes: 4, activeMin: 12, keepsDays: 3,
@@ -1096,6 +1149,7 @@ export const RECIPES = [
 {
   id: 'p-lunch-chicken-pasta-salad', name: 'Chicken and Pasta Salad', meal: ['lunch'],
   effort: 'standard', minutes: 25, servings: 4, batch: true, kcal: 480, protein: 38, carbs: 48, fat: 15, fiber: 6,
+  equip: ['stovetop'],
   tags: ['batch', 'meal-prep', 'high-protein', 'portable'],
   prep: {
     kind: 'cook', makes: 4, activeMin: 15, keepsDays: 4,
@@ -1127,6 +1181,7 @@ export const RECIPES = [
 {
   id: 'p-breakfast-oat-jars', name: 'Four Jars of Overnight Oats', meal: ['breakfast'],
   effort: 'zero', minutes: 10, servings: 4, batch: true, kcal: 345, protein: 16, carbs: 52, fat: 9, fiber: 7,
+  equip: [],
   tags: ['no-cook', 'batch', 'meal-prep', 'portable'],
   prep: {
     kind: 'portion', makes: 4, activeMin: 10, keepsDays: 4,

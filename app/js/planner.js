@@ -89,6 +89,49 @@ export function blocked(recipe, banned) {
  * @param proteinTarget  daily protein goal, used for the protein rescue pass
  * @returns { weekStart, days: [{date, dow, hours, type, slots:{slot:{recipeId, leftover, kcal}}, totals}] }
  */
+export const EQUIPMENT = [
+  { key: 'stovetop',       label: 'Stovetop / hob' },
+  { key: 'oven',           label: 'Oven' },
+  { key: 'microwave',      label: 'Microwave' },
+  { key: 'airfryer',       label: 'Air fryer' },
+  { key: 'grill',          label: 'Grill or griddle' },
+  { key: 'slowcooker',     label: 'Slow cooker' },
+  { key: 'pressurecooker', label: 'Pressure cooker' },
+  { key: 'blender',        label: 'Blender' }
+];
+
+/* An unanswered appliance is treated as available rather than missing.
+   Silently withholding half the recipe bank because a question was never
+   asked is worse than occasionally suggesting a pan someone has not got. */
+function equipState(profile, key) {
+  const v = profile?.equipment?.[key];
+  return v === 'yes' || v === 'light' || v === 'no' ? v : 'ask';
+}
+
+/**
+ * Can this recipe be made, on a day of this kind?
+ * `light` equipment is allowed only when there is time for it — which is
+ * the whole point of asking whether someone will use the oven on a
+ * work night, rather than whether they own one.
+ */
+export function equipmentOK(recipe, profile, dayType = null) {
+  const relaxed = !dayType || dayType.key === 'off' || dayType.key === 'light';
+  for (const need of recipe.equip || []) {
+    const st = equipState(profile, need);
+    if (st === 'no') return false;
+    if (st === 'light' && !relaxed) return false;
+  }
+  return true;
+}
+
+/** A gentle nudge towards food they said they like. */
+export function favoriteScore(recipe, profile) {
+  const favs = (profile?.favorites || []).map(f => String(f).toLowerCase().trim()).filter(Boolean);
+  if (!favs.length) return 0;
+  const hay = (recipe.name + ' ' + recipe.ingredients.map(i => i.n).join(' ')).toLowerCase();
+  return favs.reduce((n, f) => n + (hay.includes(f) ? 1 : 0), 0);
+}
+
 /** The slots this person actually wants planned for them. */
 export function mySlots(profile) {
   const who = profile?.whoCooks || {};
@@ -102,7 +145,7 @@ export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
   const PLAN_SLOTS = mySlots(profile);
   const rand = rng(seed);
   const banned = [...tokenize(profile.dislikes), ...tokenize(profile.allergies)];
-  const pool = RECIPES.filter(r => !blocked(r, banned));
+  const pool = RECIPES.filter(r => !blocked(r, banned) && equipmentOK(r, profile));
 
   const start = weekStart(new Date());
   const days = [];
@@ -196,7 +239,7 @@ export function buildWeek(profile, kcal, seed = 1, proteinTarget = 0) {
       if (slot === 'breakfast') effectiveRank = Math.min(effectiveRank, EFFORT_RANK.standard);
       if (slot === 'snack') effectiveRank = EFFORT_RANK.zero;
 
-      const got = choose(pool, slot, budget, effectiveRank, used, rand, day);
+      const got = choose(pool, slot, budget, effectiveRank, used, rand, day, profile);
       if (got) {
         const pick = got.recipe;
         const n = pick.batch ? 1 : fitPortions(pick.kcal, budget, slot, pick);
@@ -314,8 +357,15 @@ function pickBatch(pool, slot, day, banned, rand, used) {
  * an empty dinner slot is a far worse outcome than a dinner that takes twenty
  * minutes instead of eight. Allergies and dislikes are never relaxed.
  */
-function choose(pool, slot, budget, maxRank, used, rand, day) {
+function choose(pool, slot, budget, maxRank, used, rand, day, profile) {
   const recent = used.slice(-8);
+
+  /* Equipment they will only use when they have time gets filtered per day,
+     not per week — the whole reason for asking "will you use the oven on a
+     work night" is that the answer changes by day. The last-resort stage
+     deliberately ignores it: an empty dinner slot is worse than one that
+     asks you to turn the oven on. */
+  const usable = profile ? pool.filter(r => equipmentOK(r, profile, day.type)) : pool;
 
   const stages = [
     r => r.meal.includes(slot) && EFFORT_RANK[r.effort] <= maxRank && r.minutes <= day.type.cookMinutes,
@@ -326,7 +376,7 @@ function choose(pool, slot, budget, maxRank, used, rand, day) {
 
   let cands = [], stage = 0;
   for (; stage < stages.length; stage++) {
-    cands = pool.filter(stages[stage]);
+    cands = usable.filter(stages[stage]);
     if (cands.length) break;
   }
   if (!cands.length) { cands = pool.slice(); stage = stages.length; }
@@ -341,8 +391,12 @@ function choose(pool, slot, budget, maxRank, used, rand, day) {
     const everUsed = used.includes(r.id) ? 0.35 : 0;
     const density = r.protein / (r.kcal / 100);            // g protein per 100 kcal
     const proteinBonus = -Math.min(density, 12) * 0.075;
+    /* A nudge, not a rule. Someone who says they like tuna should see more
+       tuna, but a week of nothing else is how a favourite stops being one —
+       so this is weighted below the repeat penalty on purpose. */
+    const liked = -Math.min(favoriteScore(r, profile), 2) * 0.3;
     const jitter = rand() * 0.18;
-    return { r, score: fit + repeat + everUsed + proteinBonus + jitter };
+    return { r, score: fit + repeat + everUsed + proteinBonus + liked + jitter };
   }).sort((a, b) => a.score - b.score);
 
   // stage > 0 means a rule had to be stretched to fill this slot at all.
@@ -409,7 +463,7 @@ export function dayTotals(day) {
 export function swapSlot(plan, dayIndex, slot, profile) {
   const day = plan.days[dayIndex];
   const banned = [...tokenize(profile.dislikes), ...tokenize(profile.allergies)];
-  const pool = RECIPES.filter(r => !blocked(r, banned));
+  const pool = RECIPES.filter(r => !blocked(r, banned) && equipmentOK(r, profile));
   const current = day.slots[slot]?.recipeId;
   const used = plan.days.flatMap(d => Object.values(d.slots).map(s => s.recipeId));
 
@@ -446,7 +500,7 @@ export function retuneDay(plan, dayIndex, hours, profile, doneSlots = []) {
   day.budget = slotBudget(kcalTotal, hours);
 
   const banned = [...tokenize(profile.dislikes), ...tokenize(profile.allergies)];
-  const pool = RECIPES.filter(r => !blocked(r, banned));
+  const pool = RECIPES.filter(r => !blocked(r, banned) && equipmentOK(r, profile));
   const used = plan.days.flatMap(d => Object.values(d.slots).map(s => s.recipeId));
   const maxRank = EFFORT_RANK[day.type.maxEffort];
   const changed = [];
@@ -462,7 +516,7 @@ export function retuneDay(plan, dayIndex, hours, profile, doneSlots = []) {
     if (EFFORT_RANK[r.effort] <= maxRank && r.minutes <= day.type.cookMinutes) continue;
 
     const rank = slot === 'snack' ? EFFORT_RANK.zero : maxRank;
-    const got = choose(pool, slot, day.budget[slot], rank, used, Math.random, day);
+    const got = choose(pool, slot, day.budget[slot], rank, used, Math.random, day, profile);
     if (got) {
       const pick = got.recipe;
       day.slots[slot] = {

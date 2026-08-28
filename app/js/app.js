@@ -9,7 +9,8 @@ import {
 } from './store.js';
 import { targets, dayType, bmr, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
 import { RECIPES, BY_ID, EFFORT_LABEL, AISLES } from './recipes.js';
-import { buildWeek, swapSlot, retuneDay, groceryList, fmtQty, dayTotals, SLOTS } from './planner.js';
+import { buildWeek, swapSlot, retuneDay, groceryList, fmtQty, dayTotals, SLOTS, EQUIPMENT } from './planner.js';
+import { FOCUS_OPTIONS, SESSIONS, zones, weeklyTarget, sessionBurn, VISCERAL_TRUTH } from './move.js';
 import { askCoach, testKey, contextPack, buildContextFile, QUICK_PROMPTS, ApiError } from './ai.js';
 import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
@@ -484,6 +485,80 @@ function bumpHours(delta) {
   const next = Math.max(0, Math.min(24, hoursFor(key) + delta));
   setDay(key, { hoursWorked: next });
   renderToday();
+}
+
+/* ═══════════════════════════ WALKING ══════════════════════════ */
+
+function showMovement() {
+  const p = getState().profile;
+  const z = zones(p.age);
+  const target = weeklyTarget(p.focus || 'weight');
+  const visceral = (p.focus || 'weight') === 'visceral';
+  const flagged = /heart|blood pressure|bp |diabet|angina|statin|beta.?block/i.test(p.conditions || '');
+
+  const table = s => `
+    <table class="tread">
+      <thead><tr><th>Min</th><th>Speed</th><th>Incline</th><th>What</th></tr></thead>
+      <tbody>
+        ${s.blocks.map(b => `<tr class="e-${b.effort}">
+          <td>${b.from}–${b.to}</td>
+          <td>${b.speed.toFixed(1)}</td>
+          <td>${b.incline}%</td>
+          <td>${esc(b.say)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  openSheet(`
+    <h2>Walking, mostly uphill</h2>
+    <p class="small muted">Speeds are in miles per hour. Incline is the dial — if a session feels too easy or too hard, change the incline and leave the speed alone.</p>
+
+    <div class="card">
+      <div class="card-title"><h3>Your heart rate</h3><span class="small muted">age ${p.age}</span></div>
+      <div class="small stack">
+        <div class="spread"><span class="muted">Estimated maximum</span><strong>${z.max} bpm</strong></div>
+        <div class="spread"><span class="muted">Moderate</span><strong>${z.moderate.lo}–${z.moderate.hi}</strong></div>
+        <div class="spread"><span class="muted">Hard</span><strong>${z.hard.lo}–${z.hard.hi}</strong></div>
+      </div>
+      <div class="note" style="margin-bottom:0">No monitor? Use your breathing. <strong>Moderate</strong> is short sentences, not paragraphs. <strong>Hard</strong> is a few words at a time. If you can sing, you are not working; if you cannot speak at all, ease off.</div>
+    </div>
+
+    ${flagged ? `
+      <div class="warn">
+        <strong>You have noted a heart or blood-pressure condition.</strong> Talk to your doctor before starting these, and ask specifically about the harder blocks — some blood-pressure medication blunts your heart rate, which makes the numbers above misleading for you. Go by breathing instead.
+      </div>` : ''}
+
+    ${SESSIONS.map(s => `
+      <div class="card">
+        <div class="card-title"><h3>${esc(s.name)}</h3>
+          <span class="badge quick">≈${sessionBurn(s, p.currentWeight)} kcal</span></div>
+        <p class="small muted">${esc(s.when)}</p>
+        ${table(s)}
+        <div class="note" style="margin-bottom:0">${esc(s.note)}</div>
+      </div>`).join('')}
+
+    <div class="card">
+      <div class="card-title"><h3>How often</h3></div>
+      <p style="margin-bottom:0">${esc(target.line)}</p>
+    </div>
+
+    ${visceral ? `
+      <div class="card">
+        <div class="card-title"><h3>What actually shifts visceral fat</h3></div>
+        <p class="small muted">In order of how much it matters.</p>
+        <ol class="steps">
+          ${VISCERAL_TRUTH.map(v => `<li><strong>${esc(v.head)}</strong><div class="small muted">${esc(v.body)}</div></li>`).join('')}
+        </ol>
+      </div>` : `
+      <div class="note">Set your focus to belly and visceral fat in Me and this page adds a plain account of what actually shifts it — and what does not.</div>`}
+
+    <div class="warn">
+      <strong>Stop and speak to a doctor</strong> if you get chest pain or pressure, unusual breathlessness, dizziness, or an irregular heartbeat — during a session or after one. None of that is something to push through, and none of it is something this app can assess.
+    </div>
+    <p class="small muted center">General fitness guidance, not a prescription. If you have not exercised in a while, start with the ten-minute session and stay there for a fortnight.</p>
+    <button class="primary" id="mvClose" style="width:100%;margin-top:6px">Got it</button>`);
+
+  $('#mvClose').onclick = closeSheet;
 }
 
 /* ═══════════════════════════ PREP ═════════════════════════════ */
@@ -1658,6 +1733,61 @@ function renderMe() {
   </div>
 
   <div class="card">
+    <div class="card-title"><h3>What are you going for?</h3></div>
+    <p class="small muted">This changes the emphasis and the walking, not the calorie maths — that stays the same whichever you pick.</p>
+    ${FOCUS_OPTIONS.map(f => `
+      <button class="prep-slot${(p.focus || 'weight') === f.key ? ' on' : ''}" data-focus="${f.key}">
+        <span class="ps-ico">${f.icon}</span>
+        <span class="ps-body"><strong>${esc(f.label)}</strong>
+          <span class="small muted">${esc(f.blurb)}</span></span>
+        <span class="ps-go">${(p.focus || 'weight') === f.key ? '✓' : '›'}</span>
+      </button>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="card-title"><h3>Your kitchen</h3></div>
+    <p class="small muted">Owning an oven and being willing to switch it on at nine at night after a twelve-hour day are different questions. The second one is what decides whether a plan survives.</p>
+    ${EQUIPMENT.map(e => `
+      <div class="spread" style="margin-bottom:10px">
+        <label style="margin:0;flex:1">${esc(e.label)}</label>
+        <select data-equip="${e.key}" style="width:172px">
+          <option value="ask"   ${!['yes','light','no'].includes(p.equipment?.[e.key]) ? 'selected' : ''}>— not said —</option>
+          <option value="yes"   ${p.equipment?.[e.key] === 'yes' ? 'selected' : ''}>Happy to use it</option>
+          <option value="light" ${p.equipment?.[e.key] === 'light' ? 'selected' : ''}>Not on a work night</option>
+          <option value="no"    ${p.equipment?.[e.key] === 'no' ? 'selected' : ''}>Don't have one</option>
+        </select>
+      </div>`).join('')}
+    <button class="primary" id="saveEquip" style="width:100%;margin-top:6px">Save & rebuild week</button>
+    <div class="hint">Anything left unanswered stays unanswered — the coach is told it doesn't know, rather than guessing.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><h3>Foods you actually like</h3></div>
+    <p class="small muted">The coach reaches for these first when it improvises, and the planner leans towards recipes that use them.</p>
+    <div class="chips" id="favChips">
+      ${(p.favorites || []).length
+        ? p.favorites.map((f, i) => `<span class="chip">${esc(f)}<button data-favdel="${i}" aria-label="Remove ${esc(f)}">✕</button></span>`).join('')
+        : '<span class="small muted">Nothing added yet.</span>'}
+    </div>
+    <div class="btn-row" style="margin-top:12px">
+      <input id="favIn" placeholder="e.g. rotisserie chicken" style="flex:2 1 60%">
+      <button id="favAdd" style="flex:1 1 30%">Add</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><h3>Walking</h3>
+      <button class="tiny" id="showMove">The sessions</button></div>
+    <p class="small muted" style="margin-bottom:10px">${esc(weeklyTarget(p.focus || 'weight').line)}</p>
+    <div class="macro-row" style="margin-top:0">
+      <div class="macro"><b>${zones(p.age).max}</b>max heart rate</div>
+      <div class="macro"><b>${zones(p.age).moderate.lo}–${zones(p.age).moderate.hi}</b>moderate</div>
+      <div class="macro"><b>${zones(p.age).hard.lo}–${zones(p.age).hard.hi}</b>hard</div>
+      <div class="macro"><b>${weeklyTarget(p.focus || 'weight').sessions}</b>a week</div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-title"><h3>Who cooks what</h3></div>
     <p class="small muted">If someone else makes dinner, the app should not be planning one. Set it here and those meals stop cluttering your week.</p>
     ${SLOTS.map(sl => `
@@ -1737,6 +1867,48 @@ function renderMe() {
     toast('Profile saved.');
     renderMe();
   };
+
+  $('#meHost').querySelectorAll('[data-focus]').forEach(b => {
+    b.onclick = () => {
+      update(st => { st.profile.focus = b.dataset.focus; });
+      renderMe();
+      toast('Saved.');
+    };
+  });
+
+  $('#saveEquip').onclick = () => {
+    update(st => {
+      st.profile.equipment = st.profile.equipment || {};
+      document.querySelectorAll('[data-equip]').forEach(sel => {
+        st.profile.equipment[sel.dataset.equip] = sel.value;
+      });
+      const t2 = targets(st.profile);
+      st.plan = buildWeek(st.profile, t2.kcal, Date.now() & 0xffff, t2.protein);
+      st.grocery = { checked: [], generatedFor: st.plan.weekStart };
+    });
+    toast('Week rebuilt around your kitchen.');
+    show('plan');
+  };
+
+  const addFav = () => {
+    const v = $('#favIn').value.trim();
+    if (!v) return;
+    update(st => {
+      st.profile.favorites = st.profile.favorites || [];
+      if (!st.profile.favorites.some(f => f.toLowerCase() === v.toLowerCase())) st.profile.favorites.push(v);
+    });
+    renderMe();
+  };
+  $('#favAdd').onclick = addFav;
+  $('#favIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFav(); } });
+  $('#favChips').querySelectorAll('[data-favdel]').forEach(b => {
+    b.onclick = () => {
+      update(st => { st.profile.favorites.splice(Number(b.dataset.favdel), 1); });
+      renderMe();
+    };
+  });
+
+  $('#showMove').onclick = showMovement;
 
   $('#saveWho').onclick = () => {
     update(st => {

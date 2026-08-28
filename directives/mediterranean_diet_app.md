@@ -1,5 +1,5 @@
 # Mediterranean Plan — iPhone PWA
-<!-- DOE-VERSION: 2026.08.28 -->
+<!-- DOE-VERSION: 2026.08.28b -->
 
 ## Goal
 
@@ -39,7 +39,9 @@ Full deployment and iPhone install steps: `app/README.md`.
 3. **Builds the week** — classifies each day by hours worked (off / light / normal / long / brutal), which sets the maximum cooking effort and the calorie split. Batch cooks land on the lightest day; their leftovers are routed forward to the heaviest days with exact portion accounting.
 4. **Runs the day** — Today shows remaining calories, all four macros, an hours-worked stepper, tick-off meals, and weigh-in. If actual hours diverge from planned, it offers to re-tune the rest of the day.
 5. **Logs what was actually eaten** — photograph a meal, Claude returns a per-item estimate against a JSON schema, and every number is editable before it is saved. Photos are stored in IndexedDB; the numbers live in the day log.
-6. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
+6. **Preps** — a guided meal-prep planner (Prep tab): which meal, how many, real options, then how. Counts separate cooks, hands-on time and perishable portions, and argues when the picks add up to a Sunday nobody repeats.
+7. **Moves** — heart-rate zones from age (Tanaka), and 10/20/30-minute incline-walking sessions with speed and incline per block.
+8. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
 
 ---
 
@@ -58,6 +60,10 @@ Full deployment and iPhone install steps: `app/README.md`.
 - **Allergies expand to foods.** "Shellfish" is mapped to shrimp/mussel/prawn/etc., because recipes list foods, not categories. Matching is whole-word so "egg" doesn't knock out eggplant, and "olive oil" is excluded so disliking olives doesn't empty the bank.
 - **Plain English, ordinary ingredients.** Recipes are named after what is on the plate — no foreign culinary words — and every ingredient is sold in a normal supermarket under the name written. The operator reported that unfamiliar recipe names made the app overwhelming, which is the failure mode that ends adherence. The same rule is enforced on the AI coach in the system prompt.
 - **Context file is the product.** Following Daniel Miessler's personal-AI method — the model gets an explicit, readable, user-owned description of the person instead of guessing. Visible and copyable in Me → Context file.
+- **The prep planner argues back.** Two cooks is the ceiling for one session; a first attempt is talked down to one. Overproduction is judged by shelf life, not portion count — spare nuts are next week, spare cottage cheese is binned on Friday, and binning your own cooking is what ends the habit.
+- **Equipment is three states, not a checkbox.** Owning an oven and being willing to use it at 9pm after a twelve-hour day are different questions. `yes` / `light` (not on a work night) / `no` / `ask` (never answered). `light` is filtered per day against the day type, which is the only reason asking the question is worth anything. Unanswered stays unanswered — the context file says "never asked" rather than asserting.
+- **Who cooks what.** `profile.whoCooks` per slot. If a partner cooks dinner, the planner stops filling it and shows the calorie budget instead, so the day still reads as a whole day. For that household it removes a quarter of the plan that was never theirs to do.
+- **Focus changes emphasis, not arithmetic.** Visceral fat responds to the same deficit as any other fat; what changes is the movement target and what the coach leads with. The app says so rather than inventing macro splits, and states plainly that no exercise targets one part of the body.
 - **Bring-your-own API key.** Stored in localStorage only, never in backups. Everything except the chat and the photo estimate works with no key.
 - **The photo estimate is a draft, never a fact.** Every capture lands on a review sheet with editable per-item numbers, a portion scaler, and the model's own stated uncertainty. An app that silently banks a wrong calorie count is one you stop believing, and one you stop believing is one you stop opening. The model is instructed to set confidence honestly and to put anything it cannot see — dressing already tossed through, butter melted in — into an explicit "couldn't tell" field rather than guessing it into the numbers.
 - **Photos in IndexedDB, numbers in localStorage.** localStorage is ~5 MB and already holds the profile, plan, weight history and chat; a handful of meal photos would blow it. Blobs go to IndexedDB keyed by id, orphans are pruned on launch, and a backup carries the numbers but not the pictures.
@@ -84,6 +90,10 @@ Full deployment and iPhone install steps: `app/README.md`.
 | Day-type thresholds and advice | `app/js/nutrition.js` → `DAY_TYPES` |
 | Week generation, portions, leftovers, grocery | `app/js/planner.js` |
 | Coach personality, rules, context file | `app/js/ai.js` |
+| Meal prep options, guardrail, session plan | `app/js/prep.js` |
+| Heart-rate zones, treadmill sessions, visceral-fat guidance | `app/js/move.js` |
+| Equipment list, per-day gating, favourites scoring | `app/js/planner.js` |
+| What counts as eaten, weekly budget | `app/js/intake.js` |
 | Photo estimation prompt, JSON schema, image sizing | `app/js/vision.js` |
 | Meal photo storage and pruning | `app/js/photos.js` |
 | Meal log shape, totals, day intake | `app/js/store.js` |
@@ -95,6 +105,12 @@ Bump `CACHE` in `app/sw.js` when shipping changes, or installed phones keep serv
 
 Only Opus/Sonnet/Fable accept an `output_config.effort` setting — Haiku 4.5 rejects it with a 400. Both `js/ai.js` and `js/vision.js` guard on `EFFORT_MODELS` before sending it.
 
+### Recipe metadata
+
+Recipes carry `equip: []` (inferred from steps, five hand-checked overrides — "pot" reads as a saucepan when it means a yogurt tub, and "boiled" as an instruction when the eggs were boiled on Sunday) and, where they are make-ahead, a `prep` block: `kind` (`cook` or `portion`), `makes`, `activeMin`, `keepsDays`, `keeps`, `freezes`, `containers`, `reheat`, `firstTimer`. A new batch recipe without a `prep` block will not appear in the Prep tab.
+
 ### Testing
 
 Browser-level tests live outside the repo (scratchpad, Playwright). To re-run them, serve `app/` on `127.0.0.1:8777` and drive the capture flow with `page.route` stubbing `https://api.anthropic.com/**`. Worth covering: the review sheet renders and recomputes, the request carries a base64 image block plus the JSON schema, entries survive reload, and the no-key / API-failure paths both fall through to hand entry rather than losing the photo.
+
+Assert slot labels with `innerText`, not `textContent` — they are uppercased by CSS, so a `textContent` check for "DINNER" silently never matches and the assertion passes while testing nothing.

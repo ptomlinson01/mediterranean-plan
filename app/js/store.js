@@ -29,7 +29,29 @@ const DEFAULT_STATE = {
        someone whose partner cooks them is not a small annoyance — it is a
        quarter of the plan that is not theirs to do, and it is most of why
        the week reads as a wall. 'me' | 'other' | 'skip'. */
-    whoCooks: { breakfast: 'me', lunch: 'me', dinner: 'me', snack: 'me' }
+    whoCooks: { breakfast: 'me', lunch: 'me', dinner: 'me', snack: 'me' },
+
+    /* Kitchen equipment, as three states rather than a yes/no list. Owning
+       an oven and being willing to switch it on at nine at night after a
+       twelve-hour day are different questions, and the second one is the
+       one that decides whether a plan survives.
+         'yes'    — have it, happy to use it
+         'light'  — have it, but not on a working night
+         'no'     — do not have it
+         'ask'    — never answered; must not be asserted to the coach */
+    equipment: {
+      stovetop: 'ask', oven: 'ask', microwave: 'ask', airfryer: 'ask',
+      grill: 'ask', slowcooker: 'ask', pressurecooker: 'ask', blender: 'ask'
+    },
+
+    /* Foods they actually like. Nudges the planner and, more usefully,
+       tells the coach what to reach for when it improvises. */
+    favorites: [],
+
+    /* What they are actually trying to do. Changes emphasis and the
+       movement advice — not the calorie arithmetic, which is the same
+       whichever of these you pick. */
+    focus: 'weight'
   },
   settings: {
     apiKey: '',

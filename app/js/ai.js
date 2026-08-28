@@ -10,7 +10,8 @@
 import { getState, todayKey, getDay, hoursFor, trendWeight, weightSeries, entriesFor, dayIntake, DAY_FULL } from './store.js';
 import { targets, dayType, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
 import { BY_ID, recipeIndex } from './recipes.js';
-import { SLOTS } from './planner.js';
+import { SLOTS, EQUIPMENT } from './planner.js';
+import { FOCUS_OPTIONS, zones, weeklyTarget } from './move.js';
 import { weekPosition, safetyFloor } from './intake.js';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -37,6 +38,21 @@ export function buildContextFile() {
 
   const wk = weekPosition();
   const floor = safetyFloor(p);
+
+  /* Equipment, reported honestly. This block used to assert a hardcoded
+     "oven, stovetop" that nobody had ever been asked about, and told the
+     model to treat it as law — which quietly banned an air fryer its owner
+     had, and answered the blender question by accident. Unknown is now
+     stated as unknown. */
+  const eqYes = EQUIPMENT.filter(e => p.equipment?.[e.key] === 'yes').map(e => e.label);
+  const eqLight = EQUIPMENT.filter(e => p.equipment?.[e.key] === 'light').map(e => e.label);
+  const eqNo = EQUIPMENT.filter(e => p.equipment?.[e.key] === 'no').map(e => e.label);
+  const eqAsk = EQUIPMENT.filter(e => !['yes', 'light', 'no'].includes(p.equipment?.[e.key])).map(e => e.label);
+
+  const focus = FOCUS_OPTIONS.find(f => f.key === (p.focus || 'weight')) || FOCUS_OPTIONS[0];
+  const move = weeklyTarget(p.focus || 'weight');
+  const z = zones(p.age);
+  const favs = (p.favorites || []).filter(Boolean);
   const lost = Math.round((p.startWeight - trend) * 10) / 10;
   const recent = series.slice(-5).map(x => `${x.date}: ${x.weight} lb`).join(', ') || 'no weigh-ins logged yet';
 
@@ -91,6 +107,14 @@ These came from photographs of the actual plates, so they are good estimates, no
 - Down ${lost} lb since starting.
 - Activity level: ${ACTIVITY[p.activity]?.label || p.activity}.
 
+## What they are actually going for
+- Focus: ${focus.label} — ${focus.blurb}
+${p.focus === 'visceral' ? `- Visceral fat is the fat around the organs. The calorie deficit does most of the work on it; aerobic exercise adds a genuine extra effect beyond the weight loss; alcohol and sugary drinks are the two things most worth cutting. There are no exercises that target the middle — say so plainly if they ask.
+` : ''}${p.focus === 'strength' ? `- Holding on to muscle is the priority. Protein first at every meal, and never encourage a bigger deficit.
+` : ''}- Movement plan: ${move.sessions} walking sessions a week. ${move.line}
+- Their heart-rate zones at age ${p.age}: moderate ${z.moderate.lo}–${z.moderate.hi} bpm, hard ${z.hard.lo}–${z.hard.hi} bpm (estimated maximum ${z.max}).
+- Foods they have said they actually like: ${favs.length ? favs.join(', ') : 'none listed yet'}.${favs.length ? ' Reach for these first when improvising.' : ''}
+
 ## The objective
 - Lose ${t.toLose} lb on a Mediterranean pattern of eating, at ${t.ratePerWeek} lb/week.
 - Estimated goal date at the current rate: ${fmtDate(t.goalDate)}${t.weeksToGoal ? ` (${t.weeksToGoal} weeks)` : ''}.
@@ -111,7 +135,7 @@ ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the
 - Typical week: ${sched} (${weeklyHours(p.workHours)} h/week total).
 - Commute: ~${p.commuteMin} min each way.
 - Willing to genuinely cook about ${p.cookNights} nights a week. Cooking confidence: ${p.cookSkill}.
-- Kitchen: ${(p.kitchen || []).join(', ') || 'basic'}.
+- Meals they handle themselves: ${SLOTS.filter(sl => (p.whoCooks?.[sl] || 'me') === 'me').join(', ') || 'none'}.${SLOTS.some(sl => p.whoCooks?.[sl] === 'other') ? ` Someone else cooks: ${SLOTS.filter(sl => p.whoCooks?.[sl] === 'other').join(', ')} — do not plan those, and do not second-guess whoever does.` : ''}
 
 ## Today — ${DAY_FULL[dow]} ${key}
 - Working ${hrs} hours. Day type: ${type.label.toUpperCase()}.
@@ -126,8 +150,11 @@ ${intakeBlock}
 ## Constraints — treat these as hard rules, not preferences
 - Dislikes / won't eat: ${p.dislikes || 'none stated'}.
 - Allergies: ${p.allergies || 'none stated'}.
-- Kitchen equipment available: ${(p.kitchen || []).join(', ') || 'basic'}. Never suggest a method needing equipment not on this list.
-- Health conditions / medications mentioned: ${p.conditions || 'none stated'}.
+- Kitchen — happy to use: ${eqYes.join(', ') || 'nothing confirmed'}.
+- Kitchen — has it, but NOT on a working night: ${eqLight.join(', ') || 'none'}. On a long or brutal day, treat these as unavailable.
+- Kitchen — does NOT have: ${eqNo.join(', ') || 'nothing stated'}. Never suggest a method needing any of these, and never suggest a substitute that needs one either.
+${eqAsk.length ? `- Never asked about: ${eqAsk.join(', ')}. You do not know whether they have these. Ask before building a suggestion around one; do not assume either way.
+` : ''}- Health conditions / medications mentioned: ${p.conditions || 'none stated'}.
 - Household notes and food rules: ${p.notes || '—'}.
 
 If any note above rules out a food, a combination, or a piece of equipment, it applies to every suggestion you make, including improvised ones. Do not suggest a substitute that quietly reintroduces the same thing.
@@ -163,7 +190,9 @@ ${recipeIndex()}
 - If they ask about medication, a medical symptom, a supplement, or anything clinical, give general information and tell them plainly to check with their doctor or pharmacist — especially for blood-pressure or diabetes medication, where losing weight genuinely changes dosing needs.
 - Never invent a nutrition number precisely. Say "roughly 450 calories", not "451 calories".
 - When they ask what they should be keeping under, answer with the single daily number first, then the weekly total. Do not give them a third figure to remember. If they have gone over, lead with the week, not the day — that is the difference between a recoverable slip and a reason to quit.
-- Do not recommend dropping below their calorie floor, fasting protocols they did not ask about, or any supplement.`;
+- Do not recommend dropping below their calorie floor, fasting protocols they did not ask about, or any supplement.
+- On exercise: brisk incline walking is the recommendation, because at their age it raises the heart rate without putting the load through the knees. Give speed and incline as numbers they can set on a treadmill. Never program running unless they raise it first. If they mention chest pain, dizziness, or breathlessness that is new, tell them to stop and speak to their doctor — do not coach through it.
+- Never claim any food, exercise or routine burns fat from one particular part of the body. It is not true, and they will find that out.`;
 }
 
 /** A one-tap copy of the full context for pasting into the Claude app,
