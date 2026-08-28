@@ -1,5 +1,5 @@
 # Mediterranean Plan — iPhone PWA
-<!-- DOE-VERSION: 2026.08.28b -->
+<!-- DOE-VERSION: 2026.08.28c -->
 
 ## Goal
 
@@ -41,7 +41,8 @@ Full deployment and iPhone install steps: `app/README.md`.
 5. **Logs what was actually eaten** — photograph a meal, Claude returns a per-item estimate against a JSON schema, and every number is editable before it is saved. Photos are stored in IndexedDB; the numbers live in the day log.
 6. **Preps** — a guided meal-prep planner (Prep tab): which meal, how many, real options, then how. Counts separate cooks, hands-on time and perishable portions, and argues when the picks add up to a Sunday nobody repeats.
 7. **Moves** — heart-rate zones from age (Tanaka), and 10/20/30-minute incline-walking sessions with speed and incline per block.
-8. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
+8. **Talks** — voice dictation into the coach, and replies read back aloud, for the moments your hands are busy.
+9. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
 
 ---
 
@@ -91,6 +92,8 @@ Full deployment and iPhone install steps: `app/README.md`.
 | Week generation, portions, leftovers, grocery | `app/js/planner.js` |
 | Coach personality, rules, context file | `app/js/ai.js` |
 | Meal prep options, guardrail, session plan | `app/js/prep.js` |
+| Install guidance per platform | `app/js/install.js` |
+| Speech in and speech out | `app/js/voice.js` |
 | Heart-rate zones, treadmill sessions, visceral-fat guidance | `app/js/move.js` |
 | Equipment list, per-day gating, favourites scoring | `app/js/planner.js` |
 | What counts as eaten, weekly budget | `app/js/intake.js` |
@@ -112,5 +115,11 @@ Recipes carry `equip: []` (inferred from steps, five hand-checked overrides — 
 ### Testing
 
 Browser-level tests live outside the repo (scratchpad, Playwright). To re-run them, serve `app/` on `127.0.0.1:8777` and drive the capture flow with `page.route` stubbing `https://api.anthropic.com/**`. Worth covering: the review sheet renders and recomputes, the request carries a base64 image block plus the JSON schema, entries survive reload, and the no-key / API-failure paths both fall through to hand entry rather than losing the photo.
+
+**`node --check` is not a syntax check for these files.** It parses them as CommonJS and passes modules that the browser rejects — a raw newline inside a single-quoted JS string got all the way to a page-level `Invalid or unexpected token` that way. Use `node --input-type=module --check < file.js`.
+
+Playwright's `addInitScript` runs on **every** navigation, so a seed without an `if (localStorage.getItem(...)) return;` guard silently reverts whatever the test just changed before a reload. Two separate suites reported false failures from this.
+
+`window.speechSynthesis` is a read-only accessor; a plain assignment to stub it is dropped without error and the real voiceless engine runs. Use `Object.defineProperty`.
 
 Assert slot labels with `innerText`, not `textContent` — they are uppercased by CSS, so a `textContent` check for "DINNER" silently never matches and the assertion passes while testing nothing.

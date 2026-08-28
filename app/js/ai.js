@@ -49,6 +49,15 @@ export function buildContextFile() {
   const eqNo = EQUIPMENT.filter(e => p.equipment?.[e.key] === 'no').map(e => e.label);
   const eqAsk = EQUIPMENT.filter(e => !['yes', 'light', 'no'].includes(p.equipment?.[e.key])).map(e => e.label);
 
+  /* What is made and in the fridge right now. This is the block that lets
+     "what can I have?" at 9pm be answered with something that exists,
+     rather than a recipe they would have to go and make. */
+  const stock = (s.prepStock || []).map(x => {
+    const r = BY_ID[x.recipeId];
+    const daysLeft = Math.max(0, x.keepsDays - Math.floor((Date.now() - new Date(x.madeOn)) / 86400000));
+    return `- ${r ? r.name : x.recipeId}: ${x.left} portion${x.left === 1 ? '' : 's'} left, ${daysLeft > 0 ? `good for ${daysLeft} more day${daysLeft === 1 ? '' : 's'}` : 'past its best — tell them to bin it'}${r ? ` (${r.kcal} kcal, ${r.protein} g protein each)` : ''}`;
+  });
+
   const focus = FOCUS_OPTIONS.find(f => f.key === (p.focus || 'weight')) || FOCUS_OPTIONS[0];
   const move = weeklyTarget(p.focus || 'weight');
   const z = zones(p.age);
@@ -146,6 +155,9 @@ ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the
 
 ## What they have actually eaten today
 ${intakeBlock}
+
+## Already made and in their fridge
+${stock.length ? stock.join('\n') + '\n\nWhen they ask what to eat, LOOK HERE FIRST. Something already made beats any recipe, and the whole point of them having done the prep is that the answer is ready. Only suggest cooking if nothing here fits.' : 'Nothing prepped at the moment. They have a meal-prep planner in the app (the Prep tab) — if they are repeatedly stuck for a night snack or a lunch, point them at it rather than at another recipe. They have never done meal prep before, so keep any suggestion to one thing, and say how long it keeps.'}
 
 ## Constraints — treat these as hard rules, not preferences
 - Dislikes / won't eat: ${p.dislikes || 'none stated'}.
@@ -327,5 +339,7 @@ export const QUICK_PROMPTS = [
   { icon: '🛒', label: 'What should I always keep in?', text: 'What should I permanently keep stocked so I am never more than ten minutes from a decent Mediterranean meal?' },
   { icon: '💪', label: 'Am I getting enough protein?', text: 'Look at my targets and my plan for this week. Am I actually hitting enough protein to protect my muscle at my age? Be specific about where I fall short.' },
   { icon: '📷', label: 'How is today going?', text: 'Look at what I have actually logged today against my targets. Where am I, and what should the rest of the day look like? Be specific about protein.' },
-  { icon: '🎯', label: 'What should I keep under?', text: 'What number should I be keeping under, and where does it come from? Then tell me where I am against it for the week so far, and whether I need to change anything.' }
+  { icon: '🎯', label: 'What should I keep under?', text: 'What number should I be keeping under, and where does it come from? Then tell me where I am against it for the week so far, and whether I need to change anything.' },
+  { icon: '🥡', label: 'What have I got ready?', text: 'What is already made and in my fridge, and what should I have right now out of that? If there is nothing suitable, say so plainly.' },
+  { icon: '🏃', label: 'Walking today?', text: 'Should I do a walking session today given my hours and what I have eaten, and which length? Keep it to one recommendation.' }
 ];

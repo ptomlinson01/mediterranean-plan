@@ -14,6 +14,8 @@ import { FOCUS_OPTIONS, SESSIONS, zones, weeklyTarget, sessionBurn, VISCERAL_TRU
 import { askCoach, testKey, contextPack, buildContextFile, QUICK_PROMPTS, ApiError } from './ai.js';
 import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
+import { installGuide, isInstalled, canPrompt, promptInstall } from './install.js';
+import { canListen, canSpeak, listen, speak, stopSpeaking, isSpeaking } from './voice.js';
 import { countedForDay, weekPosition, safetyFloor, MACRO_KEYS } from './intake.js';
 import {
   PREP_SLOTS, SLOT_BY_KEY, prepOptions, sessionLoad, verdict,
@@ -79,7 +81,7 @@ function header(title, sub, right = '') {
 /* ═══════════════════════════ ONBOARDING ═══════════════════════ */
 
 let obStep = 0;
-const OB_STEPS = 6;
+const OB_STEPS = 7;
 
 function renderOnboard() {
   const p = getState().profile;
@@ -184,6 +186,32 @@ function renderOnboard() {
     </div>
 
     <div class="onboard-step ${obStep === 5 ? 'active' : ''}">
+      <h2>Your kitchen</h2>
+      <p class="small muted">Tick what you actually have. Anything unticked will never be suggested — and nothing here is guessed on your behalf.</p>
+      <div class="tickgrid">
+        ${EQUIPMENT.map(e => `
+          <label class="tickbox">
+            <input type="checkbox" data-obeq="${e.key}"
+              ${['stovetop', 'oven', 'microwave'].includes(e.key) ? 'checked' : ''}>
+            <span>${esc(e.label)}</span>
+          </label>`).join('')}
+      </div>
+      <div class="hint" style="margin-bottom:16px">You can be more precise later — there is a setting for "I have an oven but I am not switching it on after a twelve-hour day".</div>
+
+      <h3>Who cooks?</h3>
+      <p class="small muted">If someone else makes dinner, the app should not be planning one.</p>
+      ${SLOTS.map(sl => `
+        <div class="spread" style="margin-bottom:9px">
+          <label style="margin:0;flex:1">${SLOT_LABEL[sl]}</label>
+          <select data-obwho="${sl}" style="width:150px">
+            <option value="me">I handle it</option>
+            <option value="other">Someone else</option>
+            <option value="skip">I skip it</option>
+          </select>
+        </div>`).join('')}
+    </div>
+
+    <div class="onboard-step ${obStep === 6 ? 'active' : ''}">
       <h2>The AI coach (optional)</h2>
       <p class="small">Everything in this app — targets, the weekly plan, the recipes, the grocery list — works without any of this. The coach adds a chat that already knows your full situation and can improvise around it.</p>
       <div class="field"><label>Anthropic API key</label>
@@ -241,6 +269,16 @@ function captureStep() {
     p.conditions = v('#ob-cond') ?? p.conditions;
   }
   if (obStep === 5) {
+    p.equipment = p.equipment || {};
+    document.querySelectorAll('[data-obeq]').forEach(cb => {
+      p.equipment[cb.dataset.obeq] = cb.checked ? 'yes' : 'no';
+    });
+    p.whoCooks = p.whoCooks || {};
+    document.querySelectorAll('[data-obwho]').forEach(sel => {
+      p.whoCooks[sel.dataset.obwho] = sel.value;
+    });
+  }
+  if (obStep === 6) {
     s.settings.apiKey = (v('#ob-key') ?? '').trim();
   }
   save();
@@ -485,6 +523,50 @@ function bumpHours(delta) {
   const next = Math.max(0, Math.min(24, hoursFor(key) + delta));
   setDay(key, { hoursWorked: next });
   renderToday();
+}
+
+/** The week reduced to the handful of things that are actually actions. */
+function weekBrief(plan) {
+  const lines = [];
+  const batch = plan.days.find(d => d.batchDay);
+
+  if (batch) {
+    const cooked = SLOTS
+      .map(sl => ({ sl, x: batch.slots[sl] }))
+      .filter(x => x.x && !x.x.leftover && BY_ID[x.x.recipeId]?.batch)
+      .map(x => BY_ID[x.x.recipeId]);
+
+    if (cooked.length) {
+      // Which later meals this batch actually feeds — the payoff, named.
+      const ids = new Set(cooked.map(r => r.id));
+      const feeds = [];
+      for (const d of plan.days) {
+        for (const sl of SLOTS) {
+          const x = d.slots[sl];
+          if (x?.leftover && ids.has(x.recipeId)) feeds.push(`${d.dayName} ${sl}`);
+        }
+      }
+      lines.push(`<strong>${DAY_FULL[batch.dow]} is your cooking day.</strong> Make ${cooked.map(r => esc(r.name)).join(' and ')} — about ${cooked.reduce((n, r) => n + r.minutes, 0)} minutes.`);
+      if (feeds.length) {
+        lines.push(`That one cook covers <strong>${feeds.length} more meal${feeds.length > 1 ? 's' : ''}</strong>: ${feeds.join(', ')}.`);
+      }
+    } else {
+      lines.push(`<strong>${DAY_FULL[batch.dow]} is your quietest day.</strong> Nothing needed batch cooking this week, so there is no big session to do.`);
+    }
+  }
+
+  const realCooks = plan.days.filter(d =>
+    Object.values(d.slots).some(x => !x.leftover && ['standard', 'project'].includes(BY_ID[x.recipeId]?.effort))
+  );
+  lines.push(realCooks.length
+    ? `Only <strong>${realCooks.length} day${realCooks.length > 1 ? 's' : ''}</strong> need real cooking: ${realCooks.map(d => DAY_FULL[d.dow]).join(', ')}. Everything else is assembly.`
+    : 'Nothing this week needs real cooking. It is all assembly and leftovers.');
+
+  const other = SLOTS.filter(sl => getState().profile.whoCooks?.[sl] === 'other');
+  if (other.length) {
+    lines.push(`${other.map(x => SLOT_LABEL[x]).join(' and ')} ${other.length > 1 ? 'are' : 'is'} not planned — someone else handles ${other.length > 1 ? 'those' : 'that'}.`);
+  }
+  return { lines };
 }
 
 /* ═══════════════════════════ WALKING ══════════════════════════ */
@@ -1281,6 +1363,11 @@ function renderPlan() {
     return;
   }
 
+  /* The week used to open as twenty-odd meals and ninety numbers, and the
+     one thing you actually DO — cook once, on the quiet day — was a 10px
+     label somewhere in the middle of it. This says it in a sentence first. */
+  const brief = weekBrief(s.plan);
+
   const tk = todayKey();
   const cards = s.plan.days.map((d, i) => {
     const rows = SLOTS.map(slot => {
@@ -1326,6 +1413,12 @@ function renderPlan() {
     (a, d) => a + Object.values(d.slots).filter(x => x.compromised).length, 0);
 
   $('#planHost').innerHTML = `
+  <div class="card brief">
+    <div class="card-title"><h3>What you actually do this week</h3></div>
+    <ul class="brieflist">${brief.lines.map(l => `<li>${l}</li>`).join('')}</ul>
+    <button class="tiny" id="briefPrep">Plan a prep session →</button>
+  </div>
+
   <div class="card">
     <div class="spread">
       <div><b style="font-size:19px">${Math.round(weekKcal / 7)}</b><div class="small muted">avg kcal/day · target ${t.kcal}</div></div>
@@ -1340,6 +1433,7 @@ function renderPlan() {
   <p class="small muted">Tap any meal to see the recipe or swap it. Leftovers are routed to your heaviest days on purpose.</p>
   ${cards}`;
 
+  $('#briefPrep').onclick = () => { prepStep = 0; prepPicks = []; show('prep'); };
   $('#regen').onclick = regenerate;
   $('#grocery').onclick = showGrocery;
   $('#planHost').querySelectorAll('.meal').forEach(m => {
@@ -1528,9 +1622,11 @@ function renderCoach() {
     <div id="chatScroll"></div>
 
     <div class="composer">
-      <textarea id="chatIn" rows="1" placeholder="Ask anything…" enterkeyhint="send"></textarea>
+      ${canListen() ? '<button id="chatMic" class="mic" aria-label="Speak your question">🎤</button>' : ''}
+      <textarea id="chatIn" rows="1" placeholder="${canListen() ? 'Ask, or tap the mic…' : 'Ask anything…'}" enterkeyhint="send"></textarea>
       <button class="primary" id="chatSend" aria-label="Send">↑</button>
     </div>
+    ${canListen() ? '<div class="hint center" id="micHint">Tap the mic and talk. It stops on its own when you pause.</div>' : ''}
     <div class="center" style="margin-top:10px">
       <button class="tiny ghost" id="chatClear">Clear conversation</button>
     </div>`;
@@ -1557,10 +1653,70 @@ function renderCoach() {
     input.value = ''; input.style.height = 'auto';
     sendMessage(text);
   };
+  const mic = $('#chatMic');
+  if (mic) mic.onclick = toggleMic;
+
   $('#chatClear').onclick = () => {
     update(s2 => { s2.chat = []; });
     drawChat();
   };
+}
+
+/* ── talking to it ─────────────────────────────────────────────── */
+
+let micSession = null;
+
+function toggleMic() {
+  const btn = $('#chatMic');
+  const input = $('#chatIn');
+  const hint = $('#micHint');
+  if (!btn || !input) return;
+
+  if (micSession) { micSession.stop(); return; }
+
+  // Anything already typed is kept; dictation appends to it.
+  const existing = input.value.trim();
+  const prefix = existing ? existing + ' ' : '';
+
+  btn.classList.add('on');
+  btn.textContent = '⏹';
+  if (hint) hint.textContent = 'Listening…';
+
+  micSession = listen({
+    onInterim: text => {
+      input.value = prefix + text;
+      input.style.height = 'auto';
+      input.style.height = Math.min(132, input.scrollHeight) + 'px';
+    },
+    onFinal: text => {
+      input.value = (prefix + text).trim();
+    },
+    onError: msg => toast(msg),
+    onEnd: () => {
+      micSession = null;
+      btn.classList.remove('on');
+      btn.textContent = '🎤';
+      if (hint) hint.textContent = input.value.trim()
+        ? 'Check it read you right, then send.'
+        : 'Tap the mic and talk. It stops on its own when you pause.';
+      input.focus();
+    }
+  });
+
+  if (!micSession) {
+    btn.classList.remove('on');
+    btn.textContent = '🎤';
+  }
+}
+
+/** Read one reply out loud, for when your hands are busy. */
+function toggleSpeak(index) {
+  const s = getState();
+  const msg = s.chat[index];
+  if (!msg) return;
+  if (isSpeaking()) { stopSpeaking(); drawChat(); return; }
+  speak(msg.content, { onEnd: () => drawChat() });
+  drawChat();
 }
 
 /** Minimal markdown → HTML. Escapes first, so this is safe. */
@@ -1576,10 +1732,17 @@ function drawChat(pendingText = null) {
   const box = $('#chatScroll');
   if (!box) return;
   const s = getState();
-  box.innerHTML = s.chat.map(m =>
-    `<div class="msg ${m.role === 'user' ? 'user' : m.role === 'error' ? 'err' : 'bot'}">${md(m.content)}</div>`
-  ).join('') + (pendingText !== null
+  box.innerHTML = s.chat.map((m, i) => {
+    const cls = m.role === 'user' ? 'user' : m.role === 'error' ? 'err' : 'bot';
+    const readable = m.role === 'assistant' && canSpeak();
+    return `<div class="msg ${cls}">${md(m.content)}${
+      readable ? `<button class="say" data-say="${i}" aria-label="Read this out loud">${isSpeaking() ? '⏹' : '🔊'}</button>` : ''
+    }</div>`;
+  }).join('') + (pendingText !== null
     ? `<div class="msg bot">${md(pendingText)}<span class="cursor">▍</span></div>` : '');
+  box.querySelectorAll('[data-say]').forEach(b => {
+    b.onclick = e => { e.stopPropagation(); toggleSpeak(Number(b.dataset.say)); };
+  });
   box.scrollIntoView({ block: 'end' });
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
@@ -1632,7 +1795,17 @@ function renderMe() {
   const t = targets(p);
   header('Me', 'Profile, targets and settings');
 
+  const inst = installGuide();
+
   $('#meHost').innerHTML = `
+  ${!inst.done ? `
+    <div class="card install">
+      <div class="card-title"><h3>📲 ${esc(inst.title)}</h3></div>
+      <ol class="steps">${inst.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+      <div class="note" style="margin-bottom:0">${esc(inst.note)}</div>
+      ${canPrompt() ? '<button class="primary" id="doInstall" style="width:100%;margin-top:12px">Install it</button>' : ''}
+    </div>` : ''}
+
   <div class="card">
     <div class="card-title"><h3>Your numbers</h3>
       <button class="tiny" id="whyNum2">Where from?</button></div>
@@ -1866,6 +2039,13 @@ function renderMe() {
     });
     toast('Profile saved.');
     renderMe();
+  };
+
+  const di = $('#doInstall');
+  if (di) di.onclick = async () => {
+    const r = await promptInstall();
+    if (r === 'accepted') { toast('Installed.'); renderMe(); }
+    else if (r === 'unavailable') toast('Use the browser menu — the prompt is not available.');
   };
 
   $('#meHost').querySelectorAll('[data-focus]').forEach(b => {

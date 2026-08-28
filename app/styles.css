@@ -183,6 +183,29 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .meal .m-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
 .meal .m-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
 
+/* ── the week brief ────────────────────────────────────── */
+.card.brief { background: var(--sea-soft); border-color: color-mix(in srgb, var(--sea) 35%, transparent); }
+.brieflist { list-style: none; padding: 0; margin: 0 0 12px; }
+.brieflist li { position: relative; padding-left: 20px; margin-bottom: 9px; line-height: 1.45; }
+.brieflist li:last-child { margin-bottom: 0; }
+.brieflist li::before {
+  content: ''; position: absolute; left: 3px; top: 10px;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--sea);
+}
+
+.card.install { background: var(--olive-soft); border-color: color-mix(in srgb, var(--olive) 40%, transparent); }
+
+/* ── onboarding tick grid ──────────────────────────────── */
+.tickgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.tickbox {
+  display: flex; align-items: center; gap: 9px; margin: 0;
+  border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px;
+  font-size: 14.5px; font-weight: 600; color: var(--ink);
+  min-height: var(--tap); cursor: pointer;
+}
+.tickbox input { width: 21px; height: 21px; min-height: 0; flex: none; accent-color: var(--olive); }
+.tickbox:has(input:checked) { background: var(--olive-soft); border-color: var(--olive); }
+
 /* ── chips ─────────────────────────────────────────────── */
 .chips { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 .chip {
@@ -385,6 +408,30 @@ button.tiny.danger { color: var(--terra); }
 }
 .composer textarea { min-height: var(--tap); max-height: 132px; border-radius: 22px; padding: 12px 16px; }
 .composer button { flex: none; border-radius: 50%; width: var(--tap); height: var(--tap); padding: 0; }
+
+/* ── talking to it ─────────────────────────────────────── */
+.composer .mic {
+  flex: none; width: var(--tap); height: var(--tap); padding: 0;
+  border-radius: 50%; font-size: 19px; line-height: 1;
+}
+.composer .mic.on {
+  background: var(--terra); border-color: var(--terra); color: #fff;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--terra) 55%, transparent); }
+  50%      { box-shadow: 0 0 0 9px color-mix(in srgb, var(--terra) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .composer .mic.on { animation: none; } }
+
+.msg.bot { padding-bottom: 30px; }          /* room for the speaker button */
+.msg .say {
+  position: absolute; right: 6px; bottom: 4px;
+  min-height: 0; width: 30px; height: 26px; padding: 0;
+  border: none; background: transparent; font-size: 14px; opacity: .5;
+}
+.msg .say:active { opacity: 1; }
+.msg { position: relative; }
 
 /* ── tab bar ───────────────────────────────────────────── */
 /* An author-set `display` beats the UA stylesheet's [hidden] rule, so the
