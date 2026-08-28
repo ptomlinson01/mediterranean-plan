@@ -13,6 +13,7 @@ import { BY_ID, recipeIndex } from './recipes.js';
 import { SLOTS, EQUIPMENT } from './planner.js';
 import { FOCUS_OPTIONS, zones, weeklyTarget } from './move.js';
 import { weekPosition, safetyFloor } from './intake.js';
+import { BY_PROTOCOL, phase as fastPhase } from './fasting.js';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
@@ -57,6 +58,29 @@ export function buildContextFile() {
     const daysLeft = Math.max(0, x.keepsDays - Math.floor((Date.now() - new Date(x.madeOn)) / 86400000));
     return `- ${r ? r.name : x.recipeId}: ${x.left} portion${x.left === 1 ? '' : 's'} left, ${daysLeft > 0 ? `good for ${daysLeft} more day${daysLeft === 1 ? '' : 's'}` : 'past its best — tell them to bin it'}${r ? ` (${r.kcal} kcal, ${r.protein} g protein each)` : ''}`;
   });
+
+  /* A running fast changes what a good answer looks like more than almost
+     anything else here — "have some yogurt" is the wrong reply to someone
+     four hours from their window opening. */
+  const fast = s.fasting || {};
+  let fastBlock = 'Not fasting. They are not using an eating window at the moment — do not suggest one unless they raise it.';
+  if (fast.current) {
+    // Named apart from the outer `hrs` (hours worked today) on purpose —
+    // they are both hours and neither is the other.
+    const fastHrs = (Date.now() - new Date(fast.current.startedAt)) / 3600000;
+    const left = fast.current.plannedHours - fastHrs;
+    const ph = fastPhase(fastHrs);
+    fastBlock = `THEY ARE FASTING RIGHT NOW — ${fastHrs.toFixed(1)} hours in of a planned ${fast.current.plannedHours}.
+- ${left > 0 ? `About ${left.toFixed(1)} hours until they can eat.` : 'The window is open — they can eat now.'}
+- Where they are: ${ph.name}. ${ph.say}
+${fast.mode === 'medical'
+  ? '- This is a MEDICAL fast, on instruction. Do not suggest food, do not suggest breaking it early, and do not second-guess the instruction. If they say they feel unwell, tell them to contact whoever gave it.'
+  : `- Do not suggest eating before the window opens unless they say they feel unwell — in which case tell them plainly to eat, because a fast pushed through while ill is not discipline.
+- When it does open, lead with protein and vegetables. Their eating window is ${BY_PROTOCOL[fast.protocol]?.name || fast.protocol}.
+- Water, black coffee and plain tea are fine now. Milk is not.`}`;
+  } else if (fast.mode) {
+    fastBlock = `Using eating windows (${BY_PROTOCOL[fast.protocol]?.name || fast.protocol}) but not fasting at this moment. Their calorie and protein targets are unchanged by it — the window is a way of eating the same amount in less time, not less of it.`;
+  }
 
   const focus = FOCUS_OPTIONS.find(f => f.key === (p.focus || 'weight')) || FOCUS_OPTIONS[0];
   const move = weeklyTarget(p.focus || 'weight');
@@ -156,6 +180,9 @@ ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the
 ## What they have actually eaten today
 ${intakeBlock}
 
+## Fasting
+${fastBlock}
+
 ## Already made and in their fridge
 ${stock.length ? stock.join('\n') + '\n\nWhen they ask what to eat, LOOK HERE FIRST. Something already made beats any recipe, and the whole point of them having done the prep is that the answer is ready. Only suggest cooking if nothing here fits.' : 'Nothing prepped at the moment. They have a meal-prep planner in the app (the Prep tab) — if they are repeatedly stuck for a night snack or a lunch, point them at it rather than at another recipe. They have never done meal prep before, so keep any suggestion to one thing, and say how long it keeps.'}
 
@@ -204,7 +231,8 @@ ${recipeIndex()}
 - When they ask what they should be keeping under, answer with the single daily number first, then the weekly total. Do not give them a third figure to remember. If they have gone over, lead with the week, not the day — that is the difference between a recoverable slip and a reason to quit.
 - Do not recommend dropping below their calorie floor, fasting protocols they did not ask about, or any supplement.
 - On exercise: brisk incline walking is the recommendation, because at their age it raises the heart rate without putting the load through the knees. Give speed and incline as numbers they can set on a treadmill. Never program running unless they raise it first. If they mention chest pain, dizziness, or breathlessness that is new, tell them to stop and speak to their doctor — do not coach through it.
-- Never claim any food, exercise or routine burns fat from one particular part of the body. It is not true, and they will find that out.`;
+- Never claim any food, exercise or routine burns fat from one particular part of the body. It is not true, and they will find that out.
+- On fasting: it is a scheduling tool, not a separate fat-burning mechanism. Trials against ordinary calorie restriction find much the same weight loss. Say so if they ask, and never repeat the hour-by-hour claims about what switches on when — those come from cells and mice, not from people. Never suggest starting or extending a fast for someone on insulin or diabetes medication; tell them to speak to their prescriber.`;
 }
 
 /** A one-tap copy of the full context for pasting into the Claude app,

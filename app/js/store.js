@@ -69,6 +69,14 @@ const DEFAULT_STATE = {
   /* What is currently made and sitting in the fridge, so the app can answer
      "what can I eat right now" at 9pm without you opening a container. */
   prepStock: [],
+  /* Eating windows. `current` is the fast in progress, if any. */
+  fasting: {
+    mode: null,              // 'weight' | 'visceral' | 'medical'
+    protocol: '12:12',
+    current: null,           // { startedAt, plannedHours }
+    history: [],             // { startedAt, endedAt, plannedHours, completed }
+    everDone: false
+  },
   chat: [],
   version: 1
 };

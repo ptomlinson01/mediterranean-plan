@@ -16,6 +16,9 @@ import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } 
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
 import { installGuide, isInstalled, canPrompt, promptInstall } from './install.js';
 import { canListen, canSpeak, listen, speak, stopSpeaking, isSpeaking } from './voice.js';
+import {
+  PROTOCOLS, BY_PROTOCOL, MODES, screen, recommend, suggestWindow, phase, DURING
+} from './fasting.js';
 import { countedForDay, weekPosition, safetyFloor, MACRO_KEYS } from './intake.js';
 import {
   PREP_SLOTS, SLOT_BY_KEY, prepOptions, sessionLoad, verdict,
@@ -57,6 +60,8 @@ function num(v, fallback = 0) {
 let currentTab = 'today';
 
 function show(tab) {
+  clearInterval(fastTimer);
+  fastTimer = null;
   currentTab = tab;
   closeSheet();               // never leave a sheet covering the view you moved to
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -397,6 +402,8 @@ function renderToday() {
     <input type="file" id="snapFile" accept="image/*" capture="environment" hidden>
   </div>
 
+  ${fastingCard()}
+
   <div class="card flush" id="loggedCard">
     <div class="card-title" style="padding:14px 16px 0;margin-bottom:6px">
       <h3>Eaten today</h3>
@@ -480,6 +487,12 @@ function renderToday() {
   });
   paintThumbs();
 
+  wireFastingCard();
+  if (getState().fasting?.current && !fastTimer) {
+    // A minute is enough — the display is in hours and minutes, and a
+    // per-second tick would repaint the screen under someone's thumb.
+    fastTimer = setInterval(() => { if (currentTab === 'today') renderToday(); }, 60000);
+  }
   $('#whyNum').onclick = showNumberExplainer;
 
   $('#hMinus').onclick = () => bumpHours(-1);
@@ -567,6 +580,226 @@ function weekBrief(plan) {
     lines.push(`${other.map(x => SLOT_LABEL[x]).join(' and ')} ${other.length > 1 ? 'are' : 'is'} not planned — someone else handles ${other.length > 1 ? 'those' : 'that'}.`);
   }
   return { lines };
+}
+
+/* ═══════════════════════════ FASTING ══════════════════════════ */
+
+/* The screener comes before the feature on purpose. "Should I be doing
+   this" is the question that was actually asked, and for a good number of
+   people the honest answer is no — either because of what they take, or
+   because their plan is already working and another rule is just another
+   thing to fail at. An app that only knows how to say yes is not advising
+   anyone. */
+
+let fastTimer = null;
+
+function fastingCtx() {
+  const s = getState();
+  const t = targets(s.profile);
+  const wk = weekPosition();
+
+  // Do they actually have the evening problem this tool fixes?
+  const evening = Object.values(s.log).flatMap(d => d.entries || [])
+    .filter(e => { const h = new Date(e.at).getHours(); return h >= 20 || h < 4; });
+  const nightSnacking = evening.length >= 3
+    || /night|evening|snack|after dinner|9pm|late/i.test(s.profile.notes || '');
+
+  // Protein, judged over the days they actually logged something.
+  const days = Object.entries(s.log).filter(([, d]) => (d.entries || []).length);
+  const proteinDays = days.map(([k]) => countedForDay(k).protein);
+  const hittingProtein = proteinDays.length < 3
+    || proteinDays.filter(p => p >= t.protein * 0.85).length >= proteinDays.length / 2;
+
+  const series = weightSeries();
+  let onTrack = null;
+  if (series.length >= 8) {
+    const first = series[0], last = series[series.length - 1];
+    const weeks = Math.max(1, (parseKey(last.date) - parseKey(first.date)) / 604800000);
+    onTrack = ((first.weight - last.weight) / weeks) >= t.ratePerWeek * 0.6;
+  }
+  return { nightSnacking, hittingProtein, onTrack, t, wk };
+}
+
+function renderFastingSheet() {
+  const s = getState();
+  const p = s.profile;
+  const f = s.fasting;
+  const ctx = fastingCtx();
+  const mode = f.mode;
+
+  if (!mode) {
+    openSheet(`
+      <h2>Eating windows</h2>
+      <p class="small muted">Before anything else: what is this for?</p>
+      ${MODES.map(m => `
+        <button class="prep-slot" data-fmode="${m.key}">
+          <span class="ps-ico">${m.icon}</span>
+          <span class="ps-body"><strong>${esc(m.label)}</strong>
+            <span class="small muted">${esc(m.blurb)}</span></span>
+          <span class="ps-go">›</span>
+        </button>`).join('')}
+      <div class="note">Worth knowing up front: eating inside a window does not burn fat that the same calories spread across the day would not. Trials against ordinary calorie counting find much the same result. What it is genuinely good for is being <em>easy to follow</em> — and that is not nothing.</div>`);
+    $('#sheetBody').querySelectorAll('[data-fmode]').forEach(b => {
+      b.onclick = () => { update(st => { st.fasting.mode = b.dataset.fmode; }); renderFastingSheet(); };
+    });
+    return;
+  }
+
+  /* Medical is a different job entirely: hold the clock, say nothing about
+     protocols, and defer to whoever gave the instruction. */
+  if (mode === 'medical') {
+    openSheet(`
+      <h2>🩺 Fasting on instruction</h2>
+      <div class="warn">
+        <strong>Follow exactly what you were told</strong> — the hours, and anything about water, black coffee or medication. That instruction beats anything in this app, including the calorie target. If you were told to skip your usual medication, or to keep taking it, do that.
+      </div>
+      <p>The app will hold the clock and stay out of the way. Your daily calorie target is paused while a medical fast is running, because there is no sense marking you down for following medical advice.</p>
+      <div class="field" style="margin-top:14px">
+        <label>How many hours were you told to fast?</label>
+        <select id="fMedHours">
+          ${[8, 10, 12, 14, 16, 24, 36].map(h => `<option value="${h}">${h} hours</option>`).join('')}
+        </select>
+      </div>
+      <button class="primary" id="fStartMed" style="width:100%">Start the clock</button>
+      <div class="center" style="margin-top:12px"><button class="tiny ghost" id="fBack">← Not this</button></div>`);
+    $('#fStartMed').onclick = () => startFast(Number($('#fMedHours').value));
+    $('#fBack').onclick = () => { update(st => { st.fasting.mode = null; }); renderFastingSheet(); };
+    return;
+  }
+
+  const verdict = screen(p, ctx);
+  const rec = recommend(p, mode);
+  const win = suggestWindow(p, f.protocol || rec.protocol?.key || '12:12', hoursFor(todayKey()));
+
+  openSheet(`
+    <h2>Should you?</h2>
+
+    <div class="card ${verdict.verdict === 'stop' ? 'toomuch' : verdict.verdict === 'reasonable' ? 'ok' : 'stretch'}">
+      <strong>${esc(verdict.headline)}</strong>
+      ${verdict.stops.map(x => `<p class="small" style="margin:8px 0 0">${esc(x)}</p>`).join('')}
+      ${verdict.verdict === 'fixfirst' ? `<p class="small" style="margin:8px 0 0">You are logging less protein than you need most days. Squeezing ${ctx.t.protein}g into a shorter window makes that harder, and at ${p.age} protein is what stands between losing fat and losing muscle. Get protein right for a fortnight, then come back to this — it will still be here.</p>` : ''}
+      ${verdict.cares.map(x => `<p class="small" style="margin:8px 0 0">⚠︎ ${esc(x)}</p>`).join('')}
+    </div>
+
+    ${verdict.reasons.length ? `
+      <div class="card">
+        <div class="card-title"><h3>Why, for you specifically</h3></div>
+        <ul class="brieflist">
+          ${verdict.reasons.map(r => `<li>${r.good === true ? '✅ ' : r.good === false ? '⚠︎ ' : ''}${esc(r.say)}</li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+    ${verdict.canProceed ? `
+      <div class="card">
+        <div class="card-title"><h3>If you do it</h3></div>
+        <p class="small muted">${esc(rec.say)}</p>
+        <div class="field">
+          <label>Window</label>
+          <select id="fProto">
+            ${PROTOCOLS.map(x => `<option value="${x.key}" ${(f.protocol || rec.protocol?.key) === x.key ? 'selected' : ''}>${x.name} — ${esc(x.label)}</option>`).join('')}
+          </select>
+          <div class="hint" id="fProtoHint">${esc(BY_PROTOCOL[f.protocol || rec.protocol?.key || '12:12']?.who || '')}</div>
+        </div>
+        <div class="note" id="fWindow">
+          On a day like today (${hoursFor(todayKey())}h of work), eat between
+          <strong>${win.opens}</strong> and <strong>${win.closes}</strong>.
+          The window is placed around when you can actually eat, not around a nice round number.
+        </div>
+        <div class="warn" style="margin-bottom:0">
+          Your calorie target does not change. It is still ${ctx.t.kcal.toLocaleString()} a day and still ${ctx.t.protein}g of protein — you are eating the same amount, in less time. If a shorter window makes you eat less than the target, that is not a bonus. It is how you lose muscle.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><h3>While the clock runs</h3></div>
+        <ul class="brieflist">${DURING.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+      </div>
+
+      <button class="primary" id="fStart" style="width:100%">Start fasting now</button>` : ''}
+
+    <div class="center" style="margin-top:12px"><button class="tiny ghost" id="fBack">← Change what this is for</button></div>
+    <p class="small muted center" style="margin-top:10px">General guidance, not medical advice. If you feel unwell, eat.</p>`);
+
+  const sel = $('#fProto');
+  if (sel) sel.onchange = () => {
+    update(st => { st.fasting.protocol = sel.value; });
+    renderFastingSheet();
+  };
+  const st = $('#fStart');
+  if (st) st.onclick = () => startFast(BY_PROTOCOL[$('#fProto').value].fast);
+  $('#fBack').onclick = () => { update(s2 => { s2.fasting.mode = null; }); renderFastingSheet(); };
+}
+
+function startFast(hours) {
+  update(s => {
+    s.fasting.current = { startedAt: new Date().toISOString(), plannedHours: hours };
+    s.fasting.everDone = true;
+    s.profile.fastingEverDone = true;
+  });
+  closeSheet();
+  show('today');
+  toast(`Clock started — ${hours} hours.`);
+}
+
+function endFast(completed) {
+  const cur = getState().fasting.current;
+  if (!cur) return;
+  const hrs = (Date.now() - new Date(cur.startedAt)) / 3600000;
+  update(s => {
+    s.fasting.history.push({
+      startedAt: cur.startedAt, endedAt: new Date().toISOString(),
+      plannedHours: cur.plannedHours, hours: Math.round(hrs * 10) / 10, completed
+    });
+    s.fasting.current = null;
+  });
+  renderToday();
+  toast(completed ? `Done — ${hrs.toFixed(1)} hours.` : `Stopped at ${hrs.toFixed(1)} hours. That still counts.`);
+}
+
+/** The live card on Today. Null when nothing is running. */
+function fastingCard() {
+  const s = getState();
+  const cur = s.fasting?.current;
+  if (!cur) return '';
+
+  const hrs = (Date.now() - new Date(cur.startedAt)) / 3600000;
+  const pct = Math.min(100, Math.round((hrs / cur.plannedHours) * 100));
+  const done = hrs >= cur.plannedHours;
+  const ph = phase(hrs);
+  const left = Math.max(0, cur.plannedHours - hrs);
+  const medical = s.fasting.mode === 'medical';
+
+  return `
+  <div class="card fastcard">
+    <div class="card-title">
+      <h3>${medical ? '🩺 Fasting on instruction' : '⏳ Fasting'}</h3>
+      <span class="small muted">${cur.plannedHours}h planned</span>
+    </div>
+    <div class="spread">
+      <div><span class="fastbig">${Math.floor(hrs)}</span><span class="fastunit">h ${Math.floor((hrs % 1) * 60)}m</span></div>
+      <div style="text-align:right" class="small muted">
+        ${done ? '<strong style="color:var(--olive)">You can eat</strong>' : `${Math.floor(left)}h ${Math.floor((left % 1) * 60)}m to go`}
+      </div>
+    </div>
+    <div class="bar ${done ? 'olive' : ''}"><i style="width:${pct}%"></i></div>
+    ${!medical ? `<div class="note" style="margin:12px 0 0"><strong>${esc(ph.name)}.</strong> ${esc(ph.say)}</div>` : ''}
+    <div class="btn-row" style="margin-top:12px">
+      <button class="primary" id="fDone">${done ? 'Break the fast' : 'Eat now'}</button>
+      ${!done ? '<button id="fAbort" class="ghost">Stop</button>' : ''}
+    </div>
+  </div>`;
+}
+
+function wireFastingCard() {
+  const d = $('#fDone');
+  if (!d) return;
+  const cur = getState().fasting.current;
+  const hrs = (Date.now() - new Date(cur.startedAt)) / 3600000;
+  d.onclick = () => endFast(hrs >= cur.plannedHours);
+  const a = $('#fAbort');
+  if (a) a.onclick = () => {
+    if (confirm('Stop the clock early? That is not a failure — it gets logged either way.')) endFast(false);
+  };
 }
 
 /* ═══════════════════════════ WALKING ══════════════════════════ */
@@ -1961,6 +2194,14 @@ function renderMe() {
   </div>
 
   <div class="card">
+    <div class="card-title"><h3>Eating windows</h3>
+      <button class="tiny" id="showFast">${s.fasting?.current ? 'Running' : 'Should I?'}</button></div>
+    <p class="small muted" style="margin-bottom:0">${s.fasting?.current
+      ? 'A clock is running. The timer is on Today.'
+      : 'Fasting, honestly assessed — including whether you should bother, and whether anything you take rules it out.'}</p>
+  </div>
+
+  <div class="card">
     <div class="card-title"><h3>Who cooks what</h3></div>
     <p class="small muted">If someone else makes dinner, the app should not be planning one. Set it here and those meals stop cluttering your week.</p>
     ${SLOTS.map(sl => `
@@ -2089,6 +2330,7 @@ function renderMe() {
   });
 
   $('#showMove').onclick = showMovement;
+  $('#showFast').onclick = renderFastingSheet;
 
   $('#saveWho').onclick = () => {
     update(st => {

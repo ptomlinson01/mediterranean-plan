@@ -1,5 +1,5 @@
 # Mediterranean Plan — iPhone PWA
-<!-- DOE-VERSION: 2026.08.28c -->
+<!-- DOE-VERSION: 2026.08.28d -->
 
 ## Goal
 
@@ -42,7 +42,8 @@ Full deployment and iPhone install steps: `app/README.md`.
 6. **Preps** — a guided meal-prep planner (Prep tab): which meal, how many, real options, then how. Counts separate cooks, hands-on time and perishable portions, and argues when the picks add up to a Sunday nobody repeats.
 7. **Moves** — heart-rate zones from age (Tanaka), and 10/20/30-minute incline-walking sessions with speed and incline per block.
 8. **Talks** — voice dictation into the coach, and replies read back aloud, for the moments your hands are busy.
-9. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
+9. **Fasts** — eating windows, screened before offered. Real contraindication checks against the conditions field, a live clock, and a separate medical mode that prescribes nothing.
+10. **Coaches** — streams from `api.anthropic.com` directly from the browser, injecting a generated context file (now including the day's real intake) plus a compact index of all 44 recipes into the system prompt.
 
 ---
 
@@ -65,6 +66,10 @@ Full deployment and iPhone install steps: `app/README.md`.
 - **Equipment is three states, not a checkbox.** Owning an oven and being willing to use it at 9pm after a twelve-hour day are different questions. `yes` / `light` (not on a work night) / `no` / `ask` (never answered). `light` is filtered per day against the day type, which is the only reason asking the question is worth anything. Unanswered stays unanswered — the context file says "never asked" rather than asserting.
 - **Who cooks what.** `profile.whoCooks` per slot. If a partner cooks dinner, the planner stops filling it and shows the calorie budget instead, so the day still reads as a whole day. For that household it removes a quarter of the plan that was never theirs to do.
 - **Focus changes emphasis, not arithmetic.** Visceral fat responds to the same deficit as any other fat; what changes is the movement target and what the coach leads with. The app says so rather than inventing macro splits, and states plainly that no exercise targets one part of the body.
+- **Fasting is screened before it is offered.** `screen()` reads the conditions field for insulin and sulfonylureas, diabetes medication, disordered-eating history, pregnancy, and a BMI under 20 — those return `stop` and the UI renders no start button. Blood-pressure medication returns `care` and proceeds with a specific warning about dose review. A protein shortfall returns `fixfirst` and is deliberately NOT part of the pros/cons tally: at sixty, protein is the premise the whole plan rests on, and it should not be outvoted.
+- **The app says what fasting is not.** It does not burn fat that the same calories eaten across the day would not; trials against ordinary calorie restriction find much the same result. What it is good for is being easy to follow, which for a night-snacker is a real advantage. No autophagy hour-counter — those claims come from cells and mice. The calorie and protein targets are unchanged by a window, and the UI says so where someone might hope otherwise.
+- **Medical fasting is a different mode.** It recommends nothing, hides the protocol picker, defers entirely to the instruction given, and tells the coach not to second-guess it.
+- **Eating windows anchor to when dinner can finish**, then work backwards. Doing it the other way round produced an 18:6 window closing at 6pm on a twelve-hour work day — advice for somebody who is not at work.
 - **Bring-your-own API key.** Stored in localStorage only, never in backups. Everything except the chat and the photo estimate works with no key.
 - **The photo estimate is a draft, never a fact.** Every capture lands on a review sheet with editable per-item numbers, a portion scaler, and the model's own stated uncertainty. An app that silently banks a wrong calorie count is one you stop believing, and one you stop believing is one you stop opening. The model is instructed to set confidence honestly and to put anything it cannot see — dressing already tossed through, butter melted in — into an explicit "couldn't tell" field rather than guessing it into the numbers.
 - **Photos in IndexedDB, numbers in localStorage.** localStorage is ~5 MB and already holds the profile, plan, weight history and chat; a handful of meal photos would blow it. Blobs go to IndexedDB keyed by id, orphans are pruned on launch, and a backup carries the numbers but not the pictures.
@@ -94,6 +99,7 @@ Full deployment and iPhone install steps: `app/README.md`.
 | Meal prep options, guardrail, session plan | `app/js/prep.js` |
 | Install guidance per platform | `app/js/install.js` |
 | Speech in and speech out | `app/js/voice.js` |
+| Fasting screening, protocols, windows, phases | `app/js/fasting.js` |
 | Heart-rate zones, treadmill sessions, visceral-fat guidance | `app/js/move.js` |
 | Equipment list, per-day gating, favourites scoring | `app/js/planner.js` |
 | What counts as eaten, weekly budget | `app/js/intake.js` |
