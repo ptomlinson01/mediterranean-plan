@@ -31,7 +31,11 @@ const DEFAULT_STATE = {
     model: 'claude-opus-5',
     units: 'imperial'
   },
-  // date-keyed: { 'YYYY-MM-DD': { weight, hoursWorked, eaten: {slot: recipeId|null}, done: [slot], note } }
+  // date-keyed:
+  //   'YYYY-MM-DD': {
+  //     weight, hoursWorked, done: [slot], note,
+  //     entries: [ ... ]   ← what was actually eaten, see addEntry below
+  //   }
   log: {},
   plan: null,                 // { weekStart: 'YYYY-MM-DD', days: [...] }
   grocery: { checked: [], generatedFor: null },
@@ -135,14 +139,85 @@ export const DAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
 
 /* ── day log ───────────────────────────────────────────────────── */
 
+const EMPTY_DAY = { weight: null, hoursWorked: null, done: [], note: '', entries: [] };
+
 export function getDay(key = todayKey()) {
-  return state.log[key] || { weight: null, hoursWorked: null, done: [], note: '' };
+  // Days saved before meal logging existed have no `entries`, so the default
+  // fills it in rather than handing callers an undefined to trip over.
+  return { ...EMPTY_DAY, ...(state.log[key] || {}) };
 }
 
 export function setDay(key, patch) {
   return update(s => {
     s.log[key] = { ...getDay(key), ...patch };
   });
+}
+
+/* ── what was actually eaten ───────────────────────────────────── */
+
+/* An entry is one photographed or hand-entered meal:
+     { id, at, slot, label, items: [{name, portion, kcal, protein, carbs, fat, fiber}],
+       kcal, protein, carbs, fat, fiber,      ← the totals, after any edits
+       photoId, confidence, note, source }
+   The totals are stored alongside the items rather than derived on read,
+   because the person can edit them and their edit is the truth. */
+
+export function entriesFor(key = todayKey()) {
+  return getDay(key).entries;
+}
+
+export function addEntry(key, entry) {
+  return update(s => {
+    const day = s.log[key] || (s.log[key] = { ...EMPTY_DAY, done: [], entries: [] });
+    if (!Array.isArray(day.entries)) day.entries = [];
+    day.entries.push(entry);
+  });
+}
+
+export function updateEntry(key, id, patch) {
+  return update(s => {
+    const list = s.log[key]?.entries;
+    if (!Array.isArray(list)) return;
+    const i = list.findIndex(e => e.id === id);
+    if (i >= 0) list[i] = { ...list[i], ...patch };
+  });
+}
+
+export function removeEntry(key, id) {
+  return update(s => {
+    const list = s.log[key]?.entries;
+    if (!Array.isArray(list)) return;
+    s.log[key].entries = list.filter(e => e.id !== id);
+  });
+}
+
+export function newEntryId() {
+  return `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+}
+
+const MACROS = ['kcal', 'protein', 'carbs', 'fat', 'fiber'];
+
+export function sumEntries(list) {
+  const out = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, count: 0 };
+  for (const e of list || []) {
+    for (const m of MACROS) out[m] += Math.round(Number(e[m]) || 0);
+    out.count++;
+  }
+  return out;
+}
+
+/** Everything logged on a day, whatever route it came in by. */
+export function dayIntake(key = todayKey()) {
+  return sumEntries(entriesFor(key));
+}
+
+/** Every photo id the log still points at — anything else can be deleted. */
+export function referencedPhotoIds() {
+  const ids = [];
+  for (const day of Object.values(state.log)) {
+    for (const e of day?.entries || []) if (e.photoId) ids.push(e.photoId);
+  }
+  return ids;
 }
 
 /** Hours worked for a date — the logged actual, else the scheduled default. */
@@ -173,6 +248,8 @@ export function trendWeight() {
 export function exportJSON() {
   const copy = structuredClone(state);
   copy.settings.apiKey = '';   // never leaves in a backup file
+  // Meal photos live in IndexedDB and are not included — the numbers,
+  // which are what the log is for, all travel in here.
   return JSON.stringify(copy, null, 2);
 }
 

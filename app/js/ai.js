@@ -7,13 +7,16 @@
    and copy it out. The AI is the reasoning engine; the context file is the
    thing that makes its answers yours rather than generic. */
 
-import { getState, todayKey, getDay, hoursFor, trendWeight, weightSeries, DAY_FULL } from './store.js';
+import { getState, todayKey, getDay, hoursFor, trendWeight, weightSeries, entriesFor, dayIntake, DAY_FULL } from './store.js';
 import { targets, dayType, ACTIVITY, weeklyHours, fmtDate } from './nutrition.js';
 import { BY_ID, recipeIndex } from './recipes.js';
 import { SLOTS } from './planner.js';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
+
+/* Which models accept an `effort` setting. Haiku 4.5 does not. */
+const EFFORT_MODELS = /^claude-(opus|sonnet|fable)-/;
 
 /* ── the context file ──────────────────────────────────────────── */
 
@@ -37,6 +40,29 @@ export function buildContextFile() {
   const sched = p.workHours
     .map((h, i) => `${DAY_FULL[i]} ${h}h`)
     .join(' · ');
+
+  /* What they actually ate, from the photo log. This is the block that turns
+     the coach from a planner into something that knows how the day has gone —
+     it is the difference between "have chicken tonight" and "you are 900
+     calories in with 60 g of protein still to find". */
+  const logged = entriesFor(key);
+  const intake = dayIntake(key);
+  let intakeBlock;
+  if (!logged.length) {
+    intakeBlock = 'Nothing logged yet today. Do not assume they have eaten nothing — assume you do not know, and ask if it matters to the answer.';
+  } else {
+    const rows = logged.map(e => {
+      const when = new Date(e.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+      const what = (e.items || []).map(i => `${i.name}${i.portion ? ` (${i.portion})` : ''}`).join(', ');
+      const rough = e.confidence === 'low' ? ' — rough estimate' : '';
+      return `- ${when} ${e.slot}: ${e.label}${what ? ` — ${what}` : ''} — about ${e.kcal} kcal, ${e.protein} g protein${rough}`;
+    }).join('\n');
+    intakeBlock = `${rows}
+
+Running total: ${intake.kcal} kcal of ${t.kcal}, ${intake.protein} g protein of ${t.protein}, ${intake.fat} g fat, ${intake.carbs} g carbs, ${intake.fiber} g fiber.
+Left for the rest of today: ${t.kcal - intake.kcal} kcal and ${t.protein - intake.protein} g protein.
+These came from photographs of the actual plates, so they are good estimates, not measurements. Talk about them in round numbers.`;
+  }
 
   let planBlock = 'No week plan generated yet.';
   if (s.plan) {
@@ -82,7 +108,10 @@ ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the
 - Rule for this kind of day: ${type.advice}
 - Max realistic cooking effort tonight: ${type.maxEffort} (about ${type.cookMinutes} minutes).
 - Weight logged today: ${today.weight ? today.weight + ' lb' : 'not yet'}.
-- Meals ticked off so far: ${(today.done || []).join(', ') || 'none'}.
+- Planned meals ticked off so far: ${(today.done || []).join(', ') || 'none'}.
+
+## What they have actually eaten today
+${intakeBlock}
 
 ## Constraints — treat these as hard rules, not preferences
 - Dislikes / won't eat: ${p.dislikes || 'none stated'}.
@@ -150,14 +179,18 @@ export async function askCoach(history, onDelta, signal) {
   const key = (s.settings.apiKey || '').trim();
   if (!key) throw new ApiError('No API key saved. Add one in Me → Settings.', 'nokey');
 
+  const model = s.settings.model || 'claude-opus-5';
   const body = {
-    model: s.settings.model || 'claude-opus-5',
+    model,
     max_tokens: 4000,
     stream: true,
     system: systemPrompt(),
-    output_config: { effort: s.settings.effort || 'low' },
     messages: history.slice(-20).map(m => ({ role: m.role, content: m.content }))
   };
+  // Haiku 4.5 rejects the effort setting outright, so only send it to models
+  // that accept one. Without this guard, picking the cheapest model in
+  // settings breaks the coach with a 400.
+  if (EFFORT_MODELS.test(model)) body.output_config = { effort: s.settings.effort || 'low' };
 
   let res;
   try {
@@ -252,5 +285,6 @@ export const QUICK_PROMPTS = [
   { icon: '🍫', label: 'I want something sweet', text: 'I am craving something sweet. What do I do right now?' },
   { icon: '📉', label: 'The scale went up', text: 'The scale went up this week even though I stuck to the plan. Explain what is actually happening and what, if anything, I should change.' },
   { icon: '🛒', label: 'What should I always keep in?', text: 'What should I permanently keep stocked so I am never more than ten minutes from a decent Mediterranean meal?' },
-  { icon: '💪', label: 'Am I getting enough protein?', text: 'Look at my targets and my plan for this week. Am I actually hitting enough protein to protect my muscle at my age? Be specific about where I fall short.' }
+  { icon: '💪', label: 'Am I getting enough protein?', text: 'Look at my targets and my plan for this week. Am I actually hitting enough protein to protect my muscle at my age? Be specific about where I fall short.' },
+  { icon: '📷', label: 'How is today going?', text: 'Look at what I have actually logged today against my targets. Where am I, and what should the rest of the day look like? Be specific about protein.' }
 ];

@@ -154,7 +154,8 @@ input, select, textarea {
 input:focus, select, textarea:focus { outline: 2px solid var(--sea); outline-offset: 1px; }
 textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .field { margin-bottom: 14px; }
-.field .hint { font-size: 12px; color: var(--muted); margin-top: 5px; font-weight: 400; }
+/* Scoping this to .field meant any hint outside one rendered at body size. */
+.hint { font-size: 12px; color: var(--muted); margin-top: 5px; font-weight: 400; line-height: 1.45; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
@@ -181,6 +182,64 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .meal .m-name { font-weight: 600; display: block; }
 .meal .m-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
 .meal .m-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
+
+/* ── logging what you ate ──────────────────────────────── */
+.hero-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+.hero-macros .hm b { display: block; font-size: 15px; font-weight: 650; }
+.hero-macros .hm span { font-size: 10.5px; opacity: .8; text-transform: uppercase; letter-spacing: .05em; }
+.hero-macros .bar { height: 5px; background: rgba(255,255,255,.25); margin-top: 5px; }
+.hero-macros .bar > i { background: #fff; }
+
+/* The one control that has to be findable one-handed, tired, in a car park. */
+.shoot {
+  width: 100%; margin-top: 16px;
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+  color: #fff; font-weight: 650; backdrop-filter: blur(4px);
+}
+.shoot:active { background: rgba(255,255,255,.28); }
+
+.shot { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; display: block; background: var(--surface-2); }
+
+.entry { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.entry:last-child { border-bottom: none; }
+.entry .thumb {
+  flex: none; width: 46px; height: 46px; border-radius: 10px; object-fit: cover;
+  background: var(--surface-2); display: grid; place-items: center; font-size: 20px;
+}
+.entry .e-body { flex: 1; min-width: 0; }
+.entry .e-name { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entry .e-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
+.entry .e-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
+
+.conf { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+.conf.high   { background: var(--olive-soft); color: var(--olive); }
+.conf.medium { background: #FDF1DC; color: #96631A; }
+.conf.low    { background: var(--terra-soft); color: var(--terra); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .conf.medium { background: #33270F; color: #E2B25C; }
+}
+
+.item-row { border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; margin-bottom: 10px; background: var(--surface); }
+.item-row .ir-head { display: flex; gap: 8px; align-items: center; }
+.item-row .ir-head input { flex: 1; min-height: 40px; }
+.item-row .ir-del { flex: none; width: 40px; min-height: 40px; padding: 0; color: var(--terra); border-color: var(--border); }
+.nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 9px; }
+.nums label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+.nums input { min-height: 40px; padding: 6px 4px; text-align: center; font-size: 15px; }
+
+.scaler { display: flex; gap: 6px; }
+.scaler button { flex: 1; min-height: 40px; padding: 6px 2px; font-size: 13.5px; }
+
+.analyzing { text-align: center; padding: 26px 0 18px; }
+.spinner {
+  width: 26px; height: 26px; margin: 0 auto 12px;
+  border: 3px solid var(--border); border-top-color: var(--sea); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+button.tiny.danger { color: var(--terra); }
 
 /* ── week grid ─────────────────────────────────────────── */
 .day-card { margin-bottom: 12px; }
