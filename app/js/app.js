@@ -184,8 +184,9 @@ function renderOnboard() {
       <div class="field"><label>Allergies</label>
         <input id="ob-allergies" value="${esc(p.allergies)}" placeholder="e.g. shellfish, walnuts">
       </div>
-      <div class="field"><label>Health conditions or medications worth knowing</label>
-        <input id="ob-cond" value="${esc(p.conditions)}" placeholder="e.g. blood pressure medication, type 2 diabetes">
+      <div class="field"><label>Conditions or medications — <strong>yours</strong></label>
+        <input id="ob-cond" value="${esc(p.conditions)}" placeholder="e.g. blood pressure medication, type 2 diabetes — or 'none'">
+        <div class="hint">Only your own. This field decides what the app will and will not suggest for you, so someone else's prescription in here would gate your plan on their medicine. Anyone else in the house goes in the notes box instead.</div>
         <div class="hint">Shared with the AI coach so it can flag things. Never leaves your phone otherwise.</div>
       </div>
     </div>
@@ -2076,7 +2077,7 @@ function renderMe() {
     <div class="ctx">${esc(buildContextFile())}</div>
     <div class="field" style="margin-top:14px">
       <label>Anything else the coach should know</label>
-      <textarea id="pNotes" placeholder="e.g. I travel every other week. My wife does the shopping on Saturdays. I hate cooking after 8pm.">${esc(p.notes)}</textarea>
+      <textarea id="pNotes" placeholder="e.g. I travel every other week. My wife cooks dinner and takes medication — she avoids grapefruit. I hate cooking after 8pm.">${esc(p.notes)}</textarea>
       <div class="hint">Free text. Gets appended to the context file above.</div>
     </div>
     <button class="tiny" id="saveNotes">Save notes</button>
@@ -2134,7 +2135,9 @@ function renderMe() {
         `<option value="${n}" ${p.cookNights == n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
     <div class="field"><label>Won't eat</label><input id="mDis" value="${esc(p.dislikes)}"></div>
     <div class="field"><label>Allergies</label><input id="mAll" value="${esc(p.allergies)}"></div>
-    <div class="field"><label>Conditions / medications</label><input id="mCond" value="${esc(p.conditions)}"></div>
+    <div class="field"><label>Conditions or medications — <strong>yours only</strong></label>
+      <input id="mCond" value="${esc(p.conditions)}" placeholder="or 'none'">
+      <div class="hint">This gates what the app offers you — fasting in particular. Another person's prescription in here would block you on their medicine, so put anything about the rest of the household in the notes box under Context file.</div></div>
     <button class="primary" id="saveProfile" style="width:100%">Save profile</button>
   </div>
 
