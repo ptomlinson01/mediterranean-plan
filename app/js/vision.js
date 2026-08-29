@@ -132,7 +132,7 @@ function visionSystem() {
   const leftKcal = t.kcal - soFar.kcal;
   const leftProtein = t.protein - soFar.protein;
 
-  return `You estimate what is on a plate from a photograph, for someone tracking a Mediterranean pattern of eating.
+  return `You estimate what someone has eaten — from a photograph of the plate, or from their own description of it — for someone tracking a Mediterranean pattern of eating.
 
 ## Your job
 Name what you can see, estimate the portion, and give calories and macros for each item. Return only the structured object you have been given a schema for.
@@ -144,7 +144,8 @@ Name what you can see, estimate the portion, and give calories and macros for ea
 - Judge cooking fat from what you can see. Food that is glistening was cooked in oil — count it. Food that looks dry was not.
 - Anything hidden — dressing already tossed through, butter already melted in, sugar in a sauce — goes in "uncertain". Do not quietly guess it into the numbers, and do not quietly leave it out.
 - Set confidence honestly. "high" is a clear picture of separable food. "low" is a mixed dish, poor light, an awkward angle, or a container you cannot see into. Claiming high when you are unsure is the worst thing you can do here: it teaches them to trust a number that is wrong, and the day they notice is the day they stop logging.
-- If there is no food in the picture, return an empty items array, label it "No food I can identify", and say so in "uncertain".
+- If there is no food in the picture, or the description is not of food, return an empty items array, label it "No food I can identify", and say so in "uncertain".
+- Working from a description rather than a picture, you cannot see portion size — so say what you assumed in "uncertain", and set confidence to "medium" at best unless they gave you amounts.
 
 ## Naming
 PLAIN ENGLISH ONLY. Never a foreign or specialist culinary word. Say "baked eggs in tomato sauce", not the restaurant name for it. Name ingredients the way a supermarket labels them. This person told us outright that unfamiliar food words made the whole thing feel overwhelming, and feeling overwhelmed is what makes people quit.
@@ -172,6 +173,36 @@ If something on this plate breaks one of those, put a short plain sentence in "r
  * @returns the parsed meal estimate
  */
 export async function estimateMeal({ base64, mediaType, note = '' }, signal) {
+  const ask = note.trim()
+    ? `Here is what I am eating. What I can tell you: ${note.trim()}`
+    : 'Here is what I am eating. Estimate it.';
+  return callEstimator([
+    { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+    { type: 'text', text: ask }
+  ], signal);
+}
+
+/**
+ * The same estimate, from a description instead of a picture.
+ *
+ * Typing is often the better route and not merely the fallback: a photograph
+ * cannot tell you the milk went in the coffee, that half of it came back to
+ * the kitchen, or what you ate in the car two hours ago. Words can.
+ */
+export async function estimateFromText(description, signal) {
+  const text = String(description || '').trim();
+  if (!text) throw new VisionError('Type what you ate first.', 'empty');
+  return callEstimator([{
+    type: 'text',
+    text: `Here is what I ate, in my own words. Estimate it as if you had seen it.
+
+"${text}"
+
+Work from exactly what I said. Where I gave you an amount, use it. Where I did not, assume an ordinary helping for a grown adult and put what you assumed in "uncertain" — do not pad the numbers to be safe, and do not trim them to be kind.`
+  }], signal);
+}
+
+async function callEstimator(content, signal) {
   const s = getState();
   const key = (s.settings.apiKey || '').trim();
   if (!key) throw new VisionError('No API key saved. Add one in Me → AI coach.', 'nokey');
@@ -179,10 +210,6 @@ export async function estimateMeal({ base64, mediaType, note = '' }, signal) {
   const model = s.settings.model || 'claude-opus-5';
   const output_config = { format: { type: 'json_schema', schema: MEAL_SCHEMA } };
   if (EFFORT_MODELS.test(model)) output_config.effort = 'low';
-
-  const ask = note.trim()
-    ? `Here is what I am eating. What I can tell you: ${note.trim()}`
-    : 'Here is what I am eating. Estimate it.';
 
   let res;
   try {
@@ -200,13 +227,7 @@ export async function estimateMeal({ base64, mediaType, note = '' }, signal) {
         max_tokens: 2000,
         system: visionSystem(),
         output_config,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: ask }
-          ]
-        }]
+        messages: [{ role: 'user', content }]
       })
     });
   } catch (e) {
@@ -219,7 +240,7 @@ export async function estimateMeal({ base64, mediaType, note = '' }, signal) {
     try { detail = (await res.json())?.error?.message || ''; } catch { /* body not JSON */ }
     if (res.status === 401) throw new VisionError('That API key was rejected. Check it in Me → AI coach.', 'auth');
     if (res.status === 429) throw new VisionError('Rate limited. Wait a moment and try the picture again.', 'rate');
-    if (res.status === 413) throw new VisionError('That picture was too big to send.', 'size');
+    if (res.status === 413) throw new VisionError('That was too big to send.', 'size');
     if (res.status === 400 && /credit|balance/i.test(detail)) {
       throw new VisionError('Your Anthropic account is out of credit.', 'credit');
     }
@@ -227,11 +248,11 @@ export async function estimateMeal({ base64, mediaType, note = '' }, signal) {
   }
 
   const data = await res.json();
-  const text = (data.content || []).find(b => b.type === 'text')?.text;
-  if (!text) throw new VisionError('Nothing came back for that picture. Try again.', 'empty');
+  const out = (data.content || []).find(b => b.type === 'text')?.text;
+  if (!out) throw new VisionError('Nothing came back. Try again.', 'empty');
 
   let parsed;
-  try { parsed = JSON.parse(text); }
+  try { parsed = JSON.parse(out); }
   catch { throw new VisionError('The estimate came back unreadable. Try again.', 'parse'); }
 
   return normalise(parsed);

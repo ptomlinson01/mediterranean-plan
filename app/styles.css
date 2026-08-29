@@ -338,6 +338,16 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .hero-macros .bar { height: 5px; background: rgba(255,255,255,.25); margin-top: 5px; }
 .hero-macros .bar > i { background: #fff; }
 
+/* Two ways in, given equal weight. Typing is not the fallback — plenty of
+   eating happens where taking a photograph would be strange. */
+.shootrow { display: flex; gap: 8px; margin-top: 16px; }
+.shootrow .shoot { flex: 1; margin-top: 0; font-size: 15px; padding: 11px 8px; }
+
+.mic-wide { width: 100%; font-weight: 650; }
+.mic-wide.on { background: var(--terra); border-color: var(--terra); color: #fff; }
+
+.chip.repeat { background: var(--sea-soft); color: var(--sea); padding: 8px 13px; border: none; font-size: 13.5px; }
+
 /* The one control that has to be findable one-handed, tired, in a car park. */
 .shoot {
   width: 100%; margin-top: 16px;

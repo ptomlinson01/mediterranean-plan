@@ -12,7 +12,7 @@ import { RECIPES, BY_ID, EFFORT_LABEL, AISLES } from './recipes.js';
 import { buildWeek, swapSlot, retuneDay, groceryList, fmtQty, dayTotals, SLOTS, EQUIPMENT } from './planner.js';
 import { FOCUS_OPTIONS, SESSIONS, zones, weeklyTarget, sessionBurn, VISCERAL_TRUTH } from './move.js';
 import { askCoach, testKey, contextPack, buildContextFile, QUICK_PROMPTS, ApiError } from './ai.js';
-import { prepareImage, estimateMeal, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
+import { prepareImage, estimateMeal, estimateFromText, guessSlot, VisionError, CONFIDENCE_LABEL } from './vision.js';
 import { newPhotoId, putPhoto, photoURL, deletePhoto, prunePhotos } from './photos.js';
 import { installGuide, isInstalled, canPrompt, promptInstall } from './install.js';
 import { canListen, canSpeak, listen, speak, stopSpeaking, isSpeaking } from './voice.js';
@@ -400,7 +400,10 @@ function renderToday() {
       ${macroBar('Fat', ate.fat, t.fat)}
       ${macroBar('Fiber', ate.fiber, t.fiber)}
     </div>
-    <button class="shoot" id="snapBtn">📷 Photograph what I ate</button>
+    <div class="shootrow">
+      <button class="shoot" id="snapBtn">📷 Photograph it</button>
+      <button class="shoot" id="typeBtn">✏️ Type it</button>
+    </div>
     <input type="file" id="snapFile" accept="image/*" capture="environment" hidden>
   </div>
 
@@ -416,9 +419,17 @@ function renderToday() {
     ${logged.length
       ? logged.map(entryRow).join('')
       : `<div style="padding:4px 16px 16px" class="small muted">
-           Take a picture of anything you eat and it lands here with calories and protein worked out.
-           The coach reads this, so it stops guessing what kind of day you have had.
+           Photograph anything you eat, or just type it — "two eggs, toast and a coffee" is enough.
+           It works out the calories and protein, and the coach reads this, so it stops guessing
+           what kind of day you have had.
          </div>`}
+    ${recentLabels().length ? `
+      <div style="padding:12px 16px 16px;border-top:1px solid var(--border)">
+        <div class="small muted" style="margin-bottom:8px">Had before — tap to log again</div>
+        <div class="chips">
+          ${recentLabels().map(r => `<button class="chip repeat" data-again="${esc(r.id)}">${esc(r.label)}<span class="small muted"> ${r.kcal}</span></button>`).join('')}
+        </div>
+      </div>` : ''}
   </div>
 
   <div class="card">
@@ -479,6 +490,7 @@ function renderToday() {
   /* The file input is reset each time: picking the same photo twice in a row
      fires no change event otherwise, which reads as the button being broken. */
   $('#snapBtn').onclick = () => $('#snapFile').click();
+  $('#typeBtn').onclick = () => startDescribe();
   $('#snapFile').onchange = e => {
     const file = e.target.files[0];
     e.target.value = '';
@@ -486,6 +498,9 @@ function renderToday() {
   };
   $('#loggedCard').querySelectorAll('[data-entry]').forEach(row => {
     row.onclick = () => openEntry(key, row.dataset.entry);
+  });
+  $('#loggedCard').querySelectorAll('[data-again]').forEach(b => {
+    b.onclick = () => repeatEntry(b.dataset.again);
   });
   paintThumbs();
 
@@ -1163,16 +1178,27 @@ const n0 = v => Math.round(v).toLocaleString();
 function weekAdvice(w) {
   const p = getState().profile;
   const floor = safetyFloor(p);
-  const drift = Math.round(w.drift);
 
   if (w.todayIdx === 0) return `Fresh week. ${n0(w.budget)} to spend across it — today sets the tone.`;
-  if (Math.abs(drift) < 250) return `Right on track. Stick to ${n0(w.t.kcal)} a day and the week lands where it should.`;
+
+  /* Nothing recorded yet this week. The honest answer is that we do not know,
+     not that they banked a week's worth of calories. */
+  if (w.drift === null) {
+    return `Nothing logged yet this week, so there is nothing to judge. Stick to ${n0(w.t.kcal)} today and the week takes care of itself.`;
+  }
+
+  const drift = Math.round(w.drift);
+  const gap = w.daysBlank
+    ? ` Judged on the ${w.daysLogged} day${w.daysLogged === 1 ? '' : 's'} you logged — the other ${w.daysBlank} are assumed on target.`
+    : '';
+
+  if (Math.abs(drift) < 250) return `Right on track. Stick to ${n0(w.t.kcal)} a day and the week lands where it should.${gap}`;
 
   if (drift < 0) {
-    return `You are ${n0(-drift)} under for the week so far. That is banked — you could eat about ${n0(w.perDay)} a day for the rest of it and still be exactly on target.`;
+    return `You are ${n0(-drift)} under for the week so far. That is banked — you could eat about ${n0(w.perDay)} a day for the rest of it and still be exactly on target.${gap}`;
   }
   if (w.perDay >= floor) {
-    return `You are ${n0(drift)} over for the week so far. Aim nearer ${n0(w.perDay)} a day for the rest of it and it evens out.`;
+    return `You are ${n0(drift)} over for the week so far. Aim nearer ${n0(w.perDay)} a day for the rest of it and it evens out.${gap}`;
   }
   // Clawing this back would mean eating under the floor. Don't ask for that.
   const short = Math.max(0.1, drift / 3500).toFixed(1);
@@ -1372,6 +1398,138 @@ async function paintThumbs() {
     fallback.textContent = '🍽️';
     img.replaceWith(fallback);
   }
+}
+
+/* ── describing it instead ─────────────────────────────────────── */
+
+/* Typing is not the poor relation of the camera. A photograph cannot tell
+   you the milk went in the coffee, that half of it went back to the
+   kitchen, or what you ate in the car two hours ago. Plenty of eating
+   happens where taking a picture would be odd, and all of it counts. */
+
+function startDescribe() {
+  openSheet(`
+    <h2>What did you eat?</h2>
+    <p class="small muted">Ordinary words are fine — "two scrambled eggs, two slices of toast and a coffee with milk". Amounts help but are not required.</p>
+    <div class="field">
+      <textarea id="descIn" rows="3" placeholder="Two eggs, toast, black coffee" autocapitalize="sentences"></textarea>
+      ${canListen() ? '<div class="btn-row" style="margin-top:8px"><button id="descMic" class="mic-wide">🎤 Say it instead</button></div>' : ''}
+      <div class="hint">Mention anything the numbers would turn on: oil it was cooked in, milk or sugar in a drink, or how much of it you actually finished.</div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="descGo" style="flex:2 1 60%">Work it out</button>
+      <button id="descCancel" style="flex:1 1 30%">Cancel</button>
+    </div>`);
+
+  const input = $('#descIn');
+  setTimeout(() => input.focus(), 120);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $('#descGo').click(); }
+  });
+
+  const m = $('#descMic');
+  if (m) m.onclick = () => dictateInto(input, m);
+  $('#descCancel').onclick = closeSheet;
+  $('#descGo').onclick = () => runDescribe(input.value);
+}
+
+/** Shared dictation for any box, so the mic behaves the same everywhere. */
+function dictateInto(input, btn) {
+  if (micSession) { micSession.stop(); return; }
+  const prefix = input.value.trim() ? input.value.trim() + ' ' : '';
+  btn.classList.add('on');
+  btn.textContent = '⏹ Listening…';
+  micSession = listen({
+    onInterim: t => { input.value = prefix + t; },
+    onFinal: t => { input.value = (prefix + t).trim(); },
+    onError: msg => toast(msg),
+    onEnd: () => {
+      micSession = null;
+      btn.classList.remove('on');
+      btn.textContent = '🎤 Say it instead';
+      input.focus();
+    }
+  });
+  if (!micSession) { btn.classList.remove('on'); btn.textContent = '🎤 Say it instead'; }
+}
+
+async function runDescribe(text) {
+  const description = (text || '').trim();
+  if (!description) { toast('Type what you ate first.'); return; }
+
+  const key = todayKey();
+  const base = {
+    key, entryId: null, at: new Date().toISOString(),
+    blob: null, photoId: null, url: null, ownsUrl: false,
+    slot: guessSlot(), note: '', label: '', items: [],
+    confidence: 'low', uncertain: '', ruleFlag: '', coachNote: ''
+  };
+
+  // No key: still log it, just without the numbers worked out for them.
+  if (!getState().settings.apiKey) {
+    draft = { ...base, label: description.slice(0, 60), items: [blankItem()] };
+    renderReview('No API key saved, so nothing was worked out. Fill in the numbers yourself — or add a key in Me → AI coach and next time it does it for you.');
+    return;
+  }
+
+  captureCtl?.abort();
+  captureCtl = new AbortController();
+  const signal = captureCtl.signal;
+
+  openSheet(`<h2>Working it out</h2>
+    <div class="card"><em>${esc(description)}</em></div>
+    <div class="analyzing"><div class="spinner"></div>
+      <div class="small muted">Estimating the calories…</div></div>
+    <button id="descAbort" style="width:100%">Cancel</button>`);
+  $('#descAbort').onclick = () => { captureCtl?.abort(); closeSheet(); };
+
+  try {
+    const est = await estimateFromText(description, signal);
+    if (signal.aborted) return;
+    draft = { ...base, ...est, note: '' };
+    if (!draft.items.length) draft.items = [blankItem()];
+    renderReview();
+  } catch (e) {
+    if (e.name === 'AbortError') return;
+    draft = { ...base, label: description.slice(0, 60), items: [blankItem()] };
+    renderReview(e instanceof VisionError ? e.message : 'That failed. Fill it in by hand instead.');
+  }
+}
+
+/** The last few distinct things logged, for one-tap repeats. */
+function recentLabels() {
+  const s = getState();
+  const seen = new Map();
+  const days = Object.keys(s.log).sort().reverse().slice(0, 14);
+  for (const d of days) {
+    for (const e of [...(s.log[d].entries || [])].reverse()) {
+      const k = e.label.toLowerCase().trim();
+      if (!k || seen.has(k)) continue;
+      seen.set(k, { id: `${d}|${e.id}`, label: e.label, kcal: e.kcal });
+      if (seen.size >= 6) return [...seen.values()];
+    }
+  }
+  return [...seen.values()];
+}
+
+/** Log something already eaten before, without describing it again. */
+function repeatEntry(ref) {
+  const [day, id] = ref.split('|');
+  const src = (getState().log[day]?.entries || []).find(e => e.id === id);
+  if (!src) return;
+  draft = {
+    key: todayKey(), entryId: null, at: new Date().toISOString(),
+    blob: null, photoId: null, url: null, ownsUrl: false,
+    slot: guessSlot(), note: src.note || '', label: src.label,
+    items: (src.items || []).map(i => ({ ...i })),
+    confidence: src.confidence || 'medium',
+    uncertain: '', ruleFlag: '',
+    coachNote: 'Logged from something you have had before — check the amount still matches.'
+  };
+  if (!draft.items.length) {
+    draft.items = [{ name: src.label, portion: '', kcal: src.kcal, protein: src.protein, carbs: src.carbs, fat: src.fat, fiber: src.fiber }];
+  }
+  renderReview();
 }
 
 /* ── capture ───────────────────────────────────────────────────── */

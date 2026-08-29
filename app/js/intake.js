@@ -61,18 +61,29 @@ export function weekPosition(now = new Date()) {
   const todayIdx = now.getDay();
   const budget = t.kcal * 7;
 
+  /* A day with nothing in it means "I did not log", not "I did not eat".
+     Treating the two as the same told a fresh install it was eleven thousand
+     calories under and could eat thirteen thousand today — arithmetically
+     consistent and completely wrong. Unlogged past days are assumed to have
+     landed on target, which is the neutral assumption, and the count of them
+     is reported so the advice can admit what it does not know. */
   const days = [];
   let usedBefore = 0;
+  let daysLogged = 0;
+  let daysBlank = 0;
   for (let i = 0; i < 7; i++) {
     const key = todayKey(addDays(start, i));
     const seen = i <= todayIdx;
     const kcal = seen ? countedForDay(key).kcal : null;
-    if (i < todayIdx) usedBefore += kcal;
+    if (i < todayIdx) {
+      if (kcal > 0) { usedBefore += kcal; daysLogged++; } else { daysBlank++; }
+    }
     days.push({ key, name: DAY_NAMES[i], isToday: i === todayIdx, future: !seen, kcal });
   }
 
   const daysLeft = 7 - todayIdx;                  // today included
-  const remaining = budget - usedBefore;
+  const assumed = t.kcal * daysBlank;             // blank days treated as on-target
+  const remaining = budget - usedBefore - assumed;
 
   return {
     t,
@@ -81,11 +92,14 @@ export function weekPosition(now = new Date()) {
     todayIdx,
     daysLeft,
     usedBefore,
+    /** Past days with something recorded, and past days with nothing. */
+    daysLogged,
+    daysBlank,
     usedTotal: usedBefore + (days[todayIdx].kcal || 0),
     remaining,
     /** What each remaining day could be, to land the week on target. */
     perDay: Math.round(remaining / daysLeft),
-    /** Positive means over where they should have been by end of yesterday. */
-    drift: usedBefore - t.kcal * todayIdx
+    /** Over/under across the days actually recorded. Null when there are none. */
+    drift: daysLogged ? usedBefore - t.kcal * daysLogged : null
   };
 }

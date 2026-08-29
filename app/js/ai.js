@@ -161,7 +161,8 @@ ${p.focus === 'visceral' ? `- Visceral fat is the fat around the organs. The cal
 
 ## Where the week stands
 - ${wk.usedTotal} kcal used of ${wk.budget} budgeted, with ${wk.daysLeft} day(s) left including today.
-- ${wk.drift === 0 ? 'Exactly on pace.' : wk.drift > 0 ? `Running ${wk.drift} kcal OVER pace.` : `Running ${-wk.drift} kcal UNDER pace — that is banked.`}
+- ${wk.daysBlank ? `${wk.daysBlank} earlier day(s) this week have nothing logged. That means UNKNOWN, not zero — never tell them they are under by the amount of an unlogged day.` : 'Every earlier day this week is logged.'}
+- ${wk.drift === null ? 'Nothing logged this week yet, so there is no pace to report. Do not invent one.' : wk.drift === 0 ? 'Exactly on pace.' : wk.drift > 0 ? `Running ${wk.drift} kcal OVER pace across the ${wk.daysLogged} logged day(s).` : `Running ${-wk.drift} kcal UNDER pace across the ${wk.daysLogged} logged day(s) — that is banked.`}
 - To land the week on target, the remaining days average ${wk.perDay} kcal each.${wk.perDay < floor ? ` That is below the ${floor} floor, so do NOT recommend it — tell them to hold at ${t.kcal} and accept the week finishing short.` : ''}
 ${t.floored ? '- NOTE: the deficit was capped for safety; the target sits at the floor.\n' : ''}
 ## Work life — this drives everything

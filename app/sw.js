@@ -2,7 +2,7 @@
    the app opens instantly and works with no signal. API calls are never
    cached — they always go to the network. */
 
-const CACHE = 'trimpath-v13';
+const CACHE = 'trimpath-v14';
 const SHELL = [
   './',
   './index.html',
