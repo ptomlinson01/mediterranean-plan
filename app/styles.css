@@ -183,6 +183,21 @@ textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 .meal .m-meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
 .meal .m-kcal { flex: none; font-size: 14px; font-weight: 650; color: var(--muted); }
 
+/* ── update banner ─────────────────────────────────────── */
+.updatebar[hidden] { display: none; }
+.updatebar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 70;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: calc(9px + env(safe-area-inset-top)) 16px 9px;
+  background: var(--olive); color: #fff;
+  font-size: 14.5px; font-weight: 600;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+.updatebar button {
+  min-height: 32px; padding: 5px 14px; font-size: 13.5px; border-radius: 8px;
+  background: #fff; color: var(--olive); border: none; font-weight: 700;
+}
+
 /* ── fasting ───────────────────────────────────────────── */
 .fastcard { border-color: color-mix(in srgb, var(--sea) 40%, transparent); background: var(--sea-soft); }
 .fastbig { font-size: 38px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }

@@ -19,6 +19,7 @@ import { canListen, canSpeak, listen, speak, stopSpeaking, isSpeaking } from './
 import {
   PROTOCOLS, BY_PROTOCOL, MODES, screen, recommend, suggestWindow, phase, DURING
 } from './fasting.js';
+import { initUpdates, applyUpdate, checkNow, runningVersion } from './updates.js';
 import { countedForDay, weekPosition, safetyFloor, MACRO_KEYS } from './intake.js';
 import {
   PREP_SLOTS, SLOT_BY_KEY, prepOptions, sessionLoad, verdict,
@@ -2316,6 +2317,14 @@ function renderMe() {
   </div>
 
   <div class="card">
+    <div class="card-title"><h3>Version</h3>
+      <button class="tiny" id="chkUpd">Check for updates</button></div>
+    <p class="small muted" style="margin-bottom:0">Running <strong id="verNow">checking…</strong>.
+      The app updates itself at the same address — there is never a new link. If a newer version
+      is waiting, a bar appears at the top of the screen.</p>
+  </div>
+
+  <div class="card">
     <div class="card-title"><h3>Your data</h3></div>
     <p class="small muted">Everything lives in this browser. Back it up before you clear site data or change phone.</p>
     <div class="btn-row">
@@ -2331,6 +2340,18 @@ function renderMe() {
     <strong>Not medical advice.</strong> This is general nutrition guidance built from your own numbers. It does not know your bloodwork. If you take medication — especially for blood pressure, diabetes, or blood thinning — talk to your doctor before and during a weight-loss push, because losing 25 lb genuinely changes what your body needs.
   </div>
   <p class="small muted center" style="padding-bottom:20px">Calorie and macro figures are good-faith estimates, not laboratory values.</p>`;
+
+  runningVersion().then(v => {
+    const el = $('#verNow');
+    if (el) el.textContent = v || 'not installed as an app';
+  });
+  $('#chkUpd').onclick = async () => {
+    const btn = $('#chkUpd');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    const found = await checkNow();
+    btn.disabled = false; btn.textContent = 'Check for updates';
+    toast(found ? 'A new version is ready — see the bar at the top.' : 'You are on the latest version.');
+  };
 
   $('#whyNum2').onclick = showNumberExplainer;
   const wc = $('#whyCap');
@@ -2562,5 +2583,16 @@ function boot() {
 
   show('today');
 }
+
+/* Update plumbing. Registered here rather than in the page so the banner and
+   the worker are wired together in one place. */
+initUpdates(() => {
+  const bar = $('#updatebar');
+  if (bar) bar.hidden = false;
+});
+$('#updateNow').onclick = () => {
+  $('#updateNow').textContent = 'Updating…';
+  applyUpdate();
+};
 
 boot();

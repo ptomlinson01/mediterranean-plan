@@ -2,7 +2,7 @@
    the app opens instantly and works with no signal. API calls are never
    cached — they always go to the network. */
 
-const CACHE = 'medplan-v11';
+const CACHE = 'medplan-v12';
 const SHELL = [
   './',
   './index.html',
@@ -21,17 +21,33 @@ const SHELL = [
   './js/move.js',
   './js/install.js',
   './js/voice.js',
+  './js/updates.js',
   './js/fasting.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
 
+/* The page needs two things from here: the ability to activate a waiting
+   version on demand, and an honest answer about which version is running.
+   Without the first, a new worker sits waiting until every tab is closed —
+   which on an installed iOS app can be never. */
+self.addEventListener('message', e => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data === 'VERSION') e.ports?.[0]?.postMessage(CACHE);
+});
+
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(SHELL))
-      .then(() => self.skipWaiting())
+    /* Deliberately NOT skipWaiting() here. A new worker that activates the
+       moment it downloads reloads the page under whoever is using it —
+       which could be mid-way through correcting a meal estimate. Instead it
+       waits, the app shows a bar, and the person decides when. The page
+       activates it by posting SKIP_WAITING.
+
+       On a first install there is no existing worker, so there is no waiting
+       phase and this costs nothing. */
+    caches.open(CACHE).then(c => c.addAll(SHELL))
   );
 });
 
