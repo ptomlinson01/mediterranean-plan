@@ -1191,6 +1191,80 @@ function weekStrip(w) {
   }).join('')}</div>`;
 }
 
+/** "Can I go faster?" — answered with this person's own arithmetic. */
+function showFasterExplainer() {
+  const p = getState().profile;
+  const t = targets(p);
+  const floor = safetyFloor(p);
+  const asked = t.requestedRate;
+
+  // What the rate they asked for would actually cost.
+  const wantedDeficit = Math.round(asked * 3500 / 7);
+  const wantedKcal = t.maintenance - wantedDeficit;
+  const belowFloor = floor - wantedKcal;
+  const pctCut = Math.round((wantedDeficit / t.maintenance) * 100);
+
+  // The other lever: burn more rather than eat less.
+  const target = weeklyTarget(p.focus || 'weight');
+  const rows = SESSIONS.map(s => {
+    const per = sessionBurn(s, p.currentWeight);
+    return [3, 4, 5].map(n => ({
+      s, n, kcal: per * n, lb: Math.round((per * n / 3500) * 100) / 100
+    }));
+  }).flat();
+  const best = rows[rows.length - 1];
+
+  openSheet(`
+    <h2>Can you go faster?</h2>
+    <p class="small muted">Short answer: a bit, and not by eating less.</p>
+
+    <div class="card toomuch">
+      <strong>${asked} lb a week would mean eating ${n0(wantedKcal)} calories a day.</strong>
+      <p class="small" style="margin:8px 0 0">
+        That is a ${n0(wantedDeficit)} daily deficit — <strong>${pctCut}%</strong> of everything you burn.
+        ${belowFloor > 0
+          ? `It is also ${n0(belowFloor)} calories <strong>below the floor</strong> of ${n0(floor)} this app will not go under.`
+          : 'It is above the hard floor, but well past the quarter-of-your-burn cap.'}
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h3>Why the cap exists</h3></div>
+      <p>Cutting harder does not take fat off faster in proportion. Past about a quarter of what you burn, an increasing share of what you lose is muscle — and at ${p.age} that is the thing you are trying to keep. Muscle is what holds your metabolism up, so losing it now means a year from now you are heavier, hungrier, and burning less than when you started. That is the trap, and it looks like success for about eight weeks.</p>
+      <p style="margin-bottom:0">There is also the practical half: ${n0(wantedKcal)} calories with ${t.protein}g of protein in it leaves almost nothing else. People do not stay on that, and the week they come off it is the week it all comes back.</p>
+    </div>
+
+    <div class="card ok">
+      <div class="card-title"><h3>The lever that does work</h3></div>
+      <p>Burn more instead of eating less. It is the same arithmetic and none of the cost.</p>
+      <table class="tread">
+        <thead><tr><th>Session</th><th>A week</th><th>Extra</th></tr></thead>
+        <tbody>
+          ${rows.filter(r => r.n === 4 || r.s.minutes === 30).map(r => `
+            <tr class="${r.lb >= 0.3 ? 'e-moderate' : 'e-easy'}">
+              <td>${r.s.minutes} min</td>
+              <td>×${r.n}</td>
+              <td>+${r.lb.toFixed(2)} lb/wk</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="note" style="margin-bottom:0">
+        <strong>${t.ratePerWeek} from the food, plus ${best.lb.toFixed(2)} from ${best.s.minutes} minutes ${best.n} times a week, is ${(t.ratePerWeek + best.lb).toFixed(2)} lb a week.</strong>
+        That is close to the ${asked} you asked for, and every ounce of it is fat rather than muscle.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h3>One thing to expect</h3></div>
+      <p style="margin-bottom:0">Your first week or two may well show 2 lb or more anyway. That is water and stored carbohydrate leaving, not fat, and it stops. When it does, nothing has gone wrong — the real number was always the one underneath.</p>
+    </div>
+
+    <button class="primary" id="fxClose" style="width:100%">Got it</button>
+    <p class="small muted center" style="margin-top:12px">Currently set to ${asked} lb a week, delivering ${t.ratePerWeek}. Change it under Profile.</p>`);
+
+  $('#fxClose').onclick = closeSheet;
+}
+
 /** The whole calculation, in order, in plain English. */
 function showNumberExplainer() {
   const p = getState().profile;
@@ -1219,6 +1293,7 @@ function showNumberExplainer() {
     </ol>
 
     ${t.floored ? `<div class="warn">The rate you picked would have pushed this below a safe floor, so it was raised to ${n0(t.kcal)}. Weight will come off a little slower. That is the right trade.</div>` : ''}
+    ${t.capped && !t.floored ? `<div class="warn">You asked to lose ${t.requestedRate} lb a week. The cut is capped at a quarter of what you burn, so you are actually set up for ${t.ratePerWeek} — the fastest this is willing to go on food alone. <strong>Walking is how you get past that</strong>, and it costs you no muscle.</div>` : ''}
 
     <div class="note">
       <strong>The week is what counts, not the day.</strong>
@@ -2062,7 +2137,14 @@ function renderMe() {
       <div class="spread"><span class="muted">On track for</span><strong>${fmtDate(t.goalDate)}</strong></div>
       <div class="spread"><span class="muted">Working</span><strong>${weeklyHours(p.workHours)} h/week</strong></div>
     </div>
-    ${t.floored ? '<div class="warn">Your requested rate would have pushed calories below a safe floor, so the target was raised. Weight will come off slightly slower — that is the right trade.</div>' : ''}
+    ${t.capped && !t.floored ? `<div class="warn">
+      You asked for <strong>${t.requestedRate} lb a week</strong>; you are getting <strong>${t.ratePerWeek}</strong>.
+      The cut is capped at a quarter of what you burn, and ${t.requestedRate} lb a week would need more than that.
+      <div style="margin-top:9px"><button class="tiny" id="whyCap">Can I go faster?</button></div>
+    </div>` : ''}
+    ${t.floored ? `<div class="warn">Your requested rate would have pushed calories below a safe floor, so the target was raised to ${n0(t.kcal)}. You are losing about ${t.ratePerWeek} lb a week rather than the ${t.requestedRate} you asked for.
+      <div style="margin-top:9px"><button class="tiny" id="whyCap">Can I go faster?</button></div>
+    </div>` : ''}
   </div>
 
   <div class="card">
@@ -2125,6 +2207,8 @@ function renderMe() {
           <option value="0.75" ${p.rate == 0.75 ? 'selected' : ''}>0.75</option>
           <option value="1" ${p.rate == 1 ? 'selected' : ''}>1.0</option>
           <option value="1.25" ${p.rate == 1.25 ? 'selected' : ''}>1.25</option>
+          <option value="1.5" ${p.rate == 1.5 ? 'selected' : ''}>1.5</option>
+          <option value="2" ${p.rate == 2 ? 'selected' : ''}>2.0</option>
         </select></div>
     </div>
     <div class="field"><label>Activity outside work</label>
@@ -2249,6 +2333,8 @@ function renderMe() {
   <p class="small muted center" style="padding-bottom:20px">Calorie and macro figures are good-faith estimates, not laboratory values.</p>`;
 
   $('#whyNum2').onclick = showNumberExplainer;
+  const wc = $('#whyCap');
+  if (wc) wc.onclick = showFasterExplainer;
   $('#ctxCopy').onclick = () => copy(buildContextFile(), 'Context file copied.');
   $('#saveNotes').onclick = () => { update(st => { st.profile.notes = $('#pNotes').value; }); toast('Saved.'); renderMe(); };
 

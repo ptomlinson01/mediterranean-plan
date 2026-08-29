@@ -149,7 +149,7 @@ ${p.focus === 'visceral' ? `- Visceral fat is the fat around the organs. The cal
 - Foods they have said they actually like: ${favs.length ? favs.join(', ') : 'none listed yet'}.${favs.length ? ' Reach for these first when improvising.' : ''}
 
 ## The objective
-- Lose ${t.toLose} lb on a Mediterranean pattern of eating, at ${t.ratePerWeek} lb/week.
+- Lose ${t.toLose} lb on a Mediterranean pattern of eating, at ${t.ratePerWeek} lb/week.${t.capped ? ` NOTE: they asked for ${t.requestedRate} lb/week. The deficit is capped at a quarter of what they burn, so ${t.ratePerWeek} is what the food alone will give. If they ask to go faster, do NOT suggest eating less — the honest answer is more walking, which adds roughly 0.2-0.4 lb/week and costs no muscle.` : ''}
 - Estimated goal date at the current rate: ${fmtDate(t.goalDate)}${t.weeksToGoal ? ` (${t.weeksToGoal} weeks)` : ''}.
 - Because of their age, preserving muscle matters as much as losing fat. Protein target is deliberately high and the deficit deliberately moderate.
 

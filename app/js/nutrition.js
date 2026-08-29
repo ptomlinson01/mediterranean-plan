@@ -30,15 +30,21 @@ export function tdee(p) {
 export function targets(p) {
   const maintenance = tdee(p);
   const wanted = (p.rate || 1) * KCAL_PER_LB / 7;        // requested daily deficit
-  const capped = Math.min(wanted, maintenance * 0.25);   // never cut more than 25%
+  const capped_ = Math.min(wanted, maintenance * 0.25);  // never cut more than 25%
   const floor = p.sex === 'female' ? 1250 : 1500;
 
-  let kcal = Math.round(maintenance - capped);
+  let kcal = Math.round(maintenance - capped_);
   let floored = false;
   if (kcal < floor) { kcal = floor; floored = true; }
 
   const actualDeficit = maintenance - kcal;
   const actualRate = (actualDeficit * 7) / KCAL_PER_LB;
+  /* Whether we quietly gave them something slower than they asked for. The
+     25% cap used to apply in silence, so choosing "1.25 lb a week" handed
+     back 1.2 with no explanation anywhere — the same silent-discrepancy
+     problem as telling the coach about an oven nobody asked about. */
+  const requestedRate = p.rate || 1;
+  const capped = wanted > capped_ + 0.5;
 
   // Protein: 1.6 g per kg of GOAL weight — preserves lean mass in a deficit.
   const goalKg = p.goalWeight / LB_PER_KG;
@@ -55,7 +61,8 @@ export function targets(p) {
     maintenance, kcal, protein, carbs, fat, fiber,
     deficit: Math.round(actualDeficit),
     ratePerWeek: Math.round(actualRate * 100) / 100,
-    floored, toLose, weeksToGoal,
+    floored, capped, requestedRate, maxSafeRate: Math.round((maintenance * 0.25 * 7 / KCAL_PER_LB) * 100) / 100,
+    toLose, weeksToGoal,
     goalDate: weeksToGoal ? addWeeks(new Date(), weeksToGoal) : null
   };
 }
