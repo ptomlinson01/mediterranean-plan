@@ -1,6 +1,6 @@
-# Mediterranean Plan
+# TrimPath
 
-An installable iPhone app (PWA) that builds a Mediterranean eating plan around **the hours you actually work**, with an AI coach that already knows your whole situation.
+An installable iPhone app (PWA) that builds a food plan around **the hours you actually work**, with an AI coach that already knows your whole situation.
 
 Built for someone roughly 58–63 years old carrying ~25 lb they want gone. That shapes real decisions in the code: the protein target is deliberately high (muscle loss, not fat loss, is the risk in a deficit at that age), the deficit is capped and floored for safety, and the type is large and high-contrast.
 
@@ -14,7 +14,7 @@ The app is plain static files — no build step, no npm, no server. Any static h
 
 ```bash
 cd C:\Users\ptomlinson\Documents\DEV\SaaS\diet-plan-app
-git add app && git commit -m "Add Mediterranean Plan PWA"
+git add app && git commit -m "Add TrimPath PWA"
 git push
 ```
 

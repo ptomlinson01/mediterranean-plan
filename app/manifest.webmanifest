@@ -1,7 +1,7 @@
 {
-  "name": "Mediterranean Plan",
-  "short_name": "Med Plan",
-  "description": "A Mediterranean-diet coach that plans around the hours you actually work.",
+  "name": "TrimPath",
+  "short_name": "TrimPath",
+  "description": "A food plan built around the hours you actually work.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

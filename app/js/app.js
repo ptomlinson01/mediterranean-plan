@@ -2558,7 +2558,7 @@ function boot() {
   const s = getState();
   if (!s.onboarded) {
     $('#tabbar').hidden = true;
-    header('Mediterranean Plan', 'Setup');
+    header('TrimPath', 'Setup');
     show('onboard');
     return;
   }

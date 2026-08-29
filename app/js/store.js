@@ -1,6 +1,11 @@
 /* Persistent state. Everything lives in localStorage on this device — nothing
    is sent anywhere except the messages you explicitly send to the AI coach. */
 
+/* DO NOT RENAME. The app was called Mediterranean Plan when this key was
+   chosen; it is now TrimPath. Renaming the key to match would orphan every
+   existing install's profile, weight history and food log behind a name
+   nobody can read. The same goes for the photo database in photos.js. A
+   cosmetic rename is not worth someone's data. */
 const KEY = 'medplan.v1';
 
 const DEFAULT_STATE = {

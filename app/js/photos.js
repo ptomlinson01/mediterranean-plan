@@ -9,6 +9,8 @@
    everything that matters. The numbers are the log; the picture is a memory
    aid. */
 
+/* DO NOT RENAME — see the note on KEY in store.js. Renaming this orphans
+   every meal photo already on the device. */
 const DB_NAME = 'medplan-photos';
 const STORE = 'photos';
 

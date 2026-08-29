@@ -2,7 +2,7 @@
    the app opens instantly and works with no signal. API calls are never
    cached — they always go to the network. */
 
-const CACHE = 'medplan-v12';
+const CACHE = 'trimpath-v13';
 const SHELL = [
   './',
   './index.html',
