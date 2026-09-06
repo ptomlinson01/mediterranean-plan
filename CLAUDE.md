@@ -8,6 +8,23 @@ You build workflows that persist. When something works, you save it so it never 
 
 ---
 
+## Brain Integration (Phill-flavored work)
+
+Before generating ANY content that reflects the operator's voice, brand, ICP targeting, or business decisions (copy, emails, proposals, marketing, follow-up scripts, etc.), load the Brain context first:
+
+1. **Read first:** `C:\Users\ptomlinson\Desktop\BRAIN\active-brain\00 System\CLAUDE.md`
+2. **Then load relevant grounding artifacts** from `Desktop\BRAIN\active-brain\00 System\` as needed:
+   - `02-voice.md` — voice + tone
+   - `03-brand-dna.md` — convictions, frameworks, anti-patterns
+   - `06-personal-brand-dna.md` — credentials, testimonials, origin stories, philosophy
+   - `CLIENT-PROFILE.md` — synthesized identity + ICP
+   - `11-the-reading.md` — current track + focus
+3. **Cross-reference:** `Desktop\BRAIN\active-brain\08 Reference\dev-folder-map.md` (Brain's view of DEV)
+
+The Brain is WHO Phill is. This DEV folder is HOW he automates things. Pure-tooling work (file ops, API plumbing, scheduled tasks) does not need the Brain — only operator-flavored output does.
+
+---
+
 ## Core Workflow
 
 ### On Every Request
